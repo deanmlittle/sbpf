@@ -47,6 +47,7 @@ node_modules
 .vscode
 keypair.json
 package-lock.json
+test-ledger
 yarn.lock"#;
 
 pub const PACKAGE_JSON: &str = r#"
