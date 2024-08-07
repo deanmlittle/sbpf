@@ -4,7 +4,7 @@ A simple scaffold to bootstrap sBPF Assembly programs.
 
 ### Installation
 ```sh
-cargo install https://github.com/deanmlittle/sbpf
+cargo install --git https://github.com/deanmlittle/sbpf.git
 ```
 
 ### Usage
