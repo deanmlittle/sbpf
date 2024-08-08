@@ -33,7 +33,7 @@ Options:
 
 ### Advanced Usage
 
-In some cases, you may wish to create a [custom linker file](https://github.com/deanmlittle/sbpf-asm-noop/blob/master/src/noop/noop.ld) to pull in external resources or exclude certain program sections or section headers. To use a custom linker, simply include it in the src directory with the same name as your program and it will be used to override the default linker. For example:
+You can override the default linker with a [custom linker file](https://github.com/deanmlittle/sbpf-asm-noop/blob/master/src/noop/noop.ld) by including it in the src directory with the same name as your program. For example:
 
 ```
 src/example/example.s
