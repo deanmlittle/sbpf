@@ -11,29 +11,29 @@ entrypoint:
 
 pub const DEFAULT_LINKER: &str = r#"PHDRS
 {
-  text    PT_LOAD    ; # Contains our executable code and constants
-  data    PT_LOAD    ; # Contains writable data
-  dynamic PT_DYNAMIC ; # Used for dynamic linking at runtime
+  text    PT_LOAD    ;
+  data    PT_LOAD    ;
+  dynamic PT_DYNAMIC ;
 }
 
 SECTIONS
 {
   . = SIZEOF_HEADERS;
-  .text    : { *(.text*)   } : text     # Executable code
-  .rodata  : { *(.rodata*) } : text     # Read-only data
-  .dynamic : { *(.dynamic) } : dynamic  # Dynamic linking information
-  .dynsym  : { *(.dynsym)  } : data     # Dynamic linking symbol table
+  .text    : { *(.text*)   } : text    
+  .rodata  : { *(.rodata*) } : text    
+  .dynamic : { *(.dynamic) } : dynamic 
+  .dynsym  : { *(.dynsym)  } : data    
   /DISCARD/ : {
-    *(.eh_frame*) # Exception handling frame information
-    *(.gnu.hash*) # GNU-style hash tables
-    *(.hash*)     # Any other type of hash tables
-    *(.comment)   # Comments
-    *(.symtab)    # Program symbol table
-    *(.strtab)    # Program string table
+    *(.eh_frame*)
+    *(.gnu.hash*)
+    *(.hash*)    
+    *(.comment)  
+    *(.symtab)   
+    *(.strtab)   
   }
 }
 
-ENTRY (entrypoint) # Symbol name of our entrypoint"#;
+ENTRY (entrypoint)"#;
 
 pub const README: &str = r#"# default_project_name
 

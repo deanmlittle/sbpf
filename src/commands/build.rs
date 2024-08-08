@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, fs};
 use std::fs::create_dir_all;
 use std::io;
 use std::path::Path;
@@ -6,6 +6,8 @@ use std::process::Command;
 use std::time::Instant;
 
 use anyhow::{Error, Result};
+
+use crate::commands::common::DEFAULT_LINKER;
 
 pub fn build() -> Result<()> {
     // Solana SDK and toolchain paths
@@ -68,23 +70,21 @@ pub fn build() -> Result<()> {
     // Function to build shared object
     fn build_shared_object(
         ld: &str,
-        out: &str,
-        src: &str,
-        deploy: &str,
-        subdir: &str,
         filename: &str,
     ) -> Result<()> {
-        let output_file = format!("{}/{}.so", deploy, filename);
-        let input_file = format!("{}/{}.o", out, filename);
-        let linker_script = format!("{}/{}/{}.ld", src, subdir, filename);
+        let output_file = format!("deploy/{}.so", filename);
+        let input_file = format!("build/{}.o", filename);
+        let linker_file = format!("build/{}.ld", filename);
+        // Check if a custom linker file exists
+        if !Path::new(&linker_file).exists() {
+            fs::write(&linker_file, DEFAULT_LINKER)?;
+        };
+
         let status = Command::new(ld)
             .arg("-shared")
-            .arg("-z")
-            .arg("notext")
-            .arg("--image-base")
-            .arg("0x100000000")
-            .arg("-T")
-            .arg(&linker_script)
+            .arg("-z").arg("notext")
+            .arg("--image-base").arg("0x100000000")
+            .arg("-T").arg(linker_file)
             .arg("-o")
             .arg(&output_file)
             .arg(&input_file)
@@ -109,7 +109,7 @@ pub fn build() -> Result<()> {
                     println!("🔄 Building \"{}\"", subdir);
                     let start = Instant::now();
                     compile_assembly(&clang, arch, arch_target, march, out, src, subdir)?;
-                    build_shared_object(&ld, out, src, deploy, subdir, subdir)?;
+                    build_shared_object(&ld, subdir)?;
                     let duration = start.elapsed();
                     println!(
                         "✅ \"{}\" built successfully in {}ms!",

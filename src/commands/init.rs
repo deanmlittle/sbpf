@@ -1,6 +1,7 @@
-use super::defaults::{DEFAULT_LINKER, DEFAULT_PROGRAM, GITIGNORE, PACKAGE_JSON, README, TSCONFIG};
+use super::common::{DEFAULT_LINKER, DEFAULT_PROGRAM, GITIGNORE, PACKAGE_JSON, README, TSCONFIG};
 use anyhow::{Error, Result};
-use solana_sdk::signature::Keypair;
+use ed25519_dalek::SigningKey;
+use rand::rngs::OsRng;
 use std::fs;
 use std::io::{self, Write};
 use std::path::Path;
@@ -40,7 +41,7 @@ pub fn init(name: Option<String>) -> Result<(), Error> {
         fs::write(project_path.join(".gitignore"), GITIGNORE)?;
         // Create linker file
         fs::write(
-            project_path.join(format!("src/{}/{}.ld", project_name, project_name)),
+            project_path.join(format!("build/{}.ld", project_name)),
             DEFAULT_LINKER,
         )?;
         // Create default program
@@ -49,11 +50,12 @@ pub fn init(name: Option<String>) -> Result<(), Error> {
             DEFAULT_PROGRAM,
         )?;
         // Create deploy keypair
+        let mut rng = OsRng;
         fs::write(
             project_path
                 .join("deploy")
                 .join(format!("{}-keypair.json", project_name)),
-            serde_json::json!(Keypair::new().to_bytes()[..]).to_string(),
+            serde_json::json!(SigningKey::generate(&mut rng).to_keypair_bytes()[..]).to_string(),
         )?;
         // Create package.json
         fs::write(
