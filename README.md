@@ -32,6 +32,5 @@ Options:
 ### TODO
 
 1. tests - Include some typescript tests to help users get started
-2. linkers - Use a custom linker if present and embed the default linker instead of always using a custom linker
 
 PRs welcome!
