@@ -1,3 +1,5 @@
+use crate::commands::common::TESTS;
+
 use super::common::{DEFAULT_PROGRAM, GITIGNORE, PACKAGE_JSON, README, TSCONFIG};
 use anyhow::{Error, Result};
 use ed25519_dalek::SigningKey;
@@ -39,11 +41,10 @@ pub fn init(name: Option<String>) -> Result<(), Error> {
         )?;
         // Create .gitignore
         fs::write(project_path.join(".gitignore"), GITIGNORE)?;
-        // Create linker file
-        // fs::write(
-        //     project_path.join(format!("build/{}.ld", project_name)),
-        //     DEFAULT_LINKER,
-        // )?;
+
+        // Create test
+        fs::write(project_path.join(format!("tests/{}.test.ts", project_name)), TESTS.replace("default_project_name", &project_name))?;
+
         // Create default program
         fs::write(
             project_path.join(format!("src/{}/{}.s", project_name, project_name)),

@@ -7,6 +7,9 @@ pub use build::*;
 pub mod deploy;
 pub use deploy::*;
 
+pub mod test;
+pub use test::*;
+
 pub mod clean;
 pub use clean::*;
 

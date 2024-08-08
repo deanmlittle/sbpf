@@ -22,8 +22,8 @@ Commands:
   init    Create a new project scaffold
   build   Compile into a Solana program executable
   deploy  Build and deploy the program
+  test    Test deployed program
   clean   Clean up build and deploy artifacts
-  test    Build, deploy and run tests
   help    Print this message or the help of the given subcommand(s)
 
 Options:
@@ -39,11 +39,6 @@ You can override the default linker with a [custom linker file](https://github.c
 src/example/example.s
 src/example/example.ld
 ```
-
-### TODO
-
-1. tests - Include some typescript tests to help users get started
-
 
 ### Contributing
 

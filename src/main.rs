@@ -1,7 +1,7 @@
 pub mod commands;
 use anyhow::Error;
 use clap::{Args, Parser, Subcommand};
-use commands::{build, clean, deploy, init};
+use commands::{build, clean, deploy, init, test};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -19,6 +19,8 @@ enum Commands {
     Build,
     #[command(about = "Build and deploy the program")]
     Deploy(DeployArgs),
+    #[command(about = "Test deployed program")]
+    Test,
     #[command(about = "Clean up build and deploy artifacts")]
     Clean,
 }
@@ -41,6 +43,7 @@ fn main() -> Result<(), Error> {
         Commands::Init(args) => init(args.name.clone()),
         Commands::Build => build(),
         Commands::Deploy(args) => deploy(args.name.clone(), args.url.clone()),
+        Commands::Test => test(),
         Commands::Clean => clean()
     }
 }
