@@ -1,4 +1,4 @@
-use super::common::{DEFAULT_LINKER, DEFAULT_PROGRAM, GITIGNORE, PACKAGE_JSON, README, TSCONFIG};
+use super::common::{DEFAULT_PROGRAM, GITIGNORE, PACKAGE_JSON, README, TSCONFIG};
 use anyhow::{Error, Result};
 use ed25519_dalek::SigningKey;
 use rand::rngs::OsRng;
@@ -40,10 +40,10 @@ pub fn init(name: Option<String>) -> Result<(), Error> {
         // Create .gitignore
         fs::write(project_path.join(".gitignore"), GITIGNORE)?;
         // Create linker file
-        fs::write(
-            project_path.join(format!("build/{}.ld", project_name)),
-            DEFAULT_LINKER,
-        )?;
+        // fs::write(
+        //     project_path.join(format!("build/{}.ld", project_name)),
+        //     DEFAULT_LINKER,
+        // )?;
         // Create default program
         fs::write(
             project_path.join(format!("src/{}/{}.s", project_name, project_name)),

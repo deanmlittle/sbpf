@@ -4,17 +4,21 @@ use std::path::Path;
 use anyhow::{Error, Result};
 
 pub fn clean() -> Result<(), Error> {
-    let deploy_path = Path::new("deploy");
+    clean_directory(".sbpf", "")?;
+    clean_directory("build", "")?;
+    clean_directory("deploy", "so")?;
+    Ok(())
+}
 
-    for entry in deploy_path.read_dir()? {
+fn clean_directory(directory: &str, extension: &str) -> Result<(), Error> {
+    let path = Path::new(directory);
+    for entry in path.read_dir()? {
         let entry = entry?;
         let path = entry.path();
         if path.is_file() {
             if let Some(ext) = path.extension().and_then(|ext| ext.to_str()) {
-                if ext == "so" || ext == "o" {
-                    if let Some(filename) = path.file_stem().and_then(|name| name.to_str()) {
-                        fs::remove_file(filename)?;
-                    }
+                if extension == "" || ext == extension {
+                    fs::remove_file(&path)?;
                 }
             }
         }

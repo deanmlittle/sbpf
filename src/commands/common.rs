@@ -42,6 +42,7 @@ Created with [sbpf](https://github.com/deanmlittle/sbpf)"#;
 pub const GITIGNORE: &str = r#"build/**/*
 deploy/**/*
 node_modules
+.sbpf
 .DS_Store
 .vscode
 keypair.json

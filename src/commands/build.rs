@@ -5,7 +5,7 @@ use std::path::Path;
 use std::process::Command;
 use std::time::Instant;
 
-use anyhow::{Error, Result};
+use anyhow::{Error, Ok, Result};
 
 use crate::commands::common::DEFAULT_LINKER;
 
@@ -72,12 +72,17 @@ pub fn build() -> Result<()> {
         ld: &str,
         filename: &str,
     ) -> Result<()> {
+        let default_linker = format!(".sbpf/linker.ld");
         let output_file = format!("deploy/{}.so", filename);
         let input_file = format!("build/{}.o", filename);
-        let linker_file = format!("build/{}.ld", filename);
+        let mut linker_file = format!("src/{}.ld", filename);
         // Check if a custom linker file exists
         if !Path::new(&linker_file).exists() {
-            fs::write(&linker_file, DEFAULT_LINKER)?;
+            if !Path::new(&default_linker).exists() {
+                fs::create_dir(".sbpf").unwrap_or_else(|_| ());
+                fs::write(&default_linker, DEFAULT_LINKER)?;
+            }
+            linker_file = default_linker;
         };
 
         let status = Command::new(ld)
