@@ -1,9 +1,0 @@
-build/**/*
-deploy/**/*
-node_modules
-.DS_Store
-.vscode
-keypair.json
-package-lock.json
-test-ledger
-yarn.lock

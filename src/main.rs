@@ -1,7 +1,7 @@
 pub mod commands;
 use anyhow::Error;
 use clap::{Args, Parser, Subcommand};
-use commands::{build, init};
+use commands::{build, deploy, init};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -13,9 +13,12 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    #[command(about = "Create a new project scaffold")]
     Init(InitArgs),
-    Build
-    // Deploy, TODO: Add deployment commands
+    #[command(about = "Compile into a Solana program executable")]
+    Build,
+    #[command(about = "Build and deploy the program")]
+    Deploy(DeployArgs),
 }
 
 #[derive(Args)]
@@ -23,11 +26,18 @@ struct InitArgs {
     name: Option<String>,
 }
 
+#[derive(Args)]
+struct DeployArgs {
+    name: Option<String>,
+    url: Option<String>,
+}
+
 fn main() -> Result<(), Error> {
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::Init(args) => init(args.name.clone()),
-        Commands::Build => build()
+        Commands::Build => build(),
+        Commands::Deploy(args) => deploy(args.name.clone(), args.url.clone()),
     }
 }
