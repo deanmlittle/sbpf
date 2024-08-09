@@ -21,6 +21,8 @@ enum Commands {
     Deploy(DeployArgs),
     #[command(about = "Test deployed program")]
     Test,
+    #[command(about = "Build, deploy and test a program")]
+    E2E(DeployArgs),
     #[command(about = "Clean up build and deploy artifacts")]
     Clean,
 }
@@ -44,6 +46,11 @@ fn main() -> Result<(), Error> {
         Commands::Build => build(),
         Commands::Deploy(args) => deploy(args.name.clone(), args.url.clone()),
         Commands::Test => test(),
-        Commands::Clean => clean()
+        Commands::E2E(args) => {
+            build()?;
+            deploy(args.name.clone(), args.url.clone())?;
+            test()
+        },
+        Commands::Clean => clean(),
     }
 }
