@@ -22,7 +22,7 @@ pub fn build() -> Result<()> {
 
     // Set src/out directory and compiler flags
     let src = "src";
-    let out = "build";
+    let out = ".sbpf";
     let deploy = "deploy";
     let arch = "-target";
     let arch_target = "sbf";
@@ -74,7 +74,7 @@ pub fn build() -> Result<()> {
     ) -> Result<()> {
         let default_linker = format!(".sbpf/linker.ld");
         let output_file = format!("deploy/{}.so", filename);
-        let input_file = format!("build/{}.o", filename);
+        let input_file = format!(".sbpf/{}.o", filename);
         let mut linker_file = format!("src/{}.ld", filename);
         // Check if a custom linker file exists
         if !Path::new(&linker_file).exists() {

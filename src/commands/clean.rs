@@ -4,8 +4,7 @@ use std::path::Path;
 use anyhow::{Error, Result};
 
 pub fn clean() -> Result<(), Error> {
-    clean_directory(".sbpf", "")?;
-    clean_directory("build", "")?;
+    fs::remove_dir_all(".sbpf")?;
     clean_directory("deploy", "so")?;
     Ok(())
 }

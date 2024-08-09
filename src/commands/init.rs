@@ -31,7 +31,6 @@ pub fn init(name: Option<String>) -> Result<(), Error> {
         // Create project path and subdirectories
         fs::create_dir_all(project_path.join("src").join(&project_name))?;
         fs::create_dir(project_path.join("deploy"))?;
-        fs::create_dir(project_path.join("build"))?;
         fs::create_dir(project_path.join("tests"))?;
 
         // Create Readme

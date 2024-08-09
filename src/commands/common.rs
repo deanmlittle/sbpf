@@ -50,20 +50,20 @@ package-lock.json
 test-ledger
 yarn.lock"#;
 
-pub const PACKAGE_JSON: &str = r#"
-{
+pub const PACKAGE_JSON: &str = r#"{
   "name": "default_project_name",
   "description": "Created with sBPF",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "test": "export SIGNER=$(cat ~/.config/solana/id.json) && mocha --import=tsx tests/**/*.ts"
+    "test": "cross-env SIGNER=$(cat ~/.config/solana/id.json) mocha --import=tsx tests/**/*.ts"
   },
   "dependencies": {
     "@solana/web3.js": "^1.91.8"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "@types/chai": "^4.3.16",
     "@types/mocha": "^10.0.6",
     "chai": "^5.1.1",
