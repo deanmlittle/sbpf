@@ -50,7 +50,7 @@ fn main() -> Result<(), Error> {
             build()?;
             deploy(args.name.clone(), args.url.clone())?;
             test()
-        },
+        }
         Commands::Clean => clean(),
     }
 }

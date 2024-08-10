@@ -1,10 +1,9 @@
-use std::fmt::format;
-use std::{env, fs};
 use std::fs::create_dir_all;
 use std::io;
 use std::path::Path;
 use std::process::Command;
 use std::time::Instant;
+use std::{env, fs};
 
 use anyhow::{Error, Ok, Result};
 
@@ -21,9 +20,11 @@ pub fn build() -> Result<()> {
     let clang = format!("{}/bin/clang", llvm_dir);
     let ld = format!("{}/bin/ld.lld", llvm_dir);
 
-    // 
+    //
     if !Path::new(&solana_sdk).exists() {
-        return Err(Error::msg(["❌ Solana platform-tools not found at: ", &solana_sdk].concat()))
+        return Err(Error::msg(
+            ["❌ Solana platform-tools not found at: ", &solana_sdk].concat(),
+        ));
     }
 
     // Set src/out directory and compiler flags
@@ -74,18 +75,15 @@ pub fn build() -> Result<()> {
     }
 
     // Function to build shared object
-    fn build_shared_object(
-        ld: &str,
-        filename: &str,
-    ) -> Result<()> {
-        let default_linker = format!(".sbpf/linker.ld");
+    fn build_shared_object(ld: &str, filename: &str) -> Result<()> {
+        let default_linker = ".sbpf/linker.ld".to_string();
         let output_file = format!("deploy/{}.so", filename);
         let input_file = format!(".sbpf/{}.o", filename);
         let mut linker_file = format!("src/{}.ld", filename);
         // Check if a custom linker file exists
         if !Path::new(&linker_file).exists() {
             if !Path::new(&default_linker).exists() {
-                fs::create_dir(".sbpf").unwrap_or_else(|_| ());
+                fs::create_dir(".sbpf").unwrap_or( ());
                 fs::write(&default_linker, DEFAULT_LINKER)?;
             }
             linker_file = default_linker;
@@ -93,9 +91,12 @@ pub fn build() -> Result<()> {
 
         let status = Command::new(ld)
             .arg("-shared")
-            .arg("-z").arg("notext")
-            .arg("--image-base").arg("0x100000000")
-            .arg("-T").arg(linker_file)
+            .arg("-z")
+            .arg("notext")
+            .arg("--image-base")
+            .arg("0x100000000")
+            .arg("-T")
+            .arg(linker_file)
             .arg("-o")
             .arg(&output_file)
             .arg(&input_file)
@@ -103,7 +104,10 @@ pub fn build() -> Result<()> {
 
         if !status.success() {
             eprintln!("Failed to build shared object for {}", filename);
-            return Err(Error::new(io::Error::new(io::ErrorKind::Other, "Linking failed")));
+            return Err(Error::new(io::Error::new(
+                io::ErrorKind::Other,
+                "Linking failed",
+            )));
         }
         Ok(())
     }

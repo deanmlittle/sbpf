@@ -42,7 +42,10 @@ pub fn init(name: Option<String>) -> Result<(), Error> {
         fs::write(project_path.join(".gitignore"), GITIGNORE)?;
 
         // Create test
-        fs::write(project_path.join(format!("tests/{}.test.ts", project_name)), TESTS.replace("default_project_name", &project_name))?;
+        fs::write(
+            project_path.join(format!("tests/{}.test.ts", project_name)),
+            TESTS.replace("default_project_name", &project_name),
+        )?;
 
         // Create default program
         fs::write(

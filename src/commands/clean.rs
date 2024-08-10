@@ -16,7 +16,7 @@ fn clean_directory(directory: &str, extension: &str) -> Result<(), Error> {
         let path = entry.path();
         if path.is_file() {
             if let Some(ext) = path.extension().and_then(|ext| ext.to_str()) {
-                if extension == "" || ext == extension {
+                if extension.is_empty() || ext == extension {
                     fs::remove_file(&path)?;
                 }
             }
