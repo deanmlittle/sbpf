@@ -14,8 +14,7 @@ cargo install --git https://github.com/deanmlittle/sbpf.git
 ### Usage
 To view all the commands you can run, type `sbpf help`
 
-
-```sh
+```
 Usage: sbpf <COMMAND>
 
 Commands:

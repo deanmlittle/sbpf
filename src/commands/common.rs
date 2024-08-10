@@ -57,7 +57,7 @@ pub const PACKAGE_JSON: &str = r#"{
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "test": "cross-env SIGNER=$(cat ~/.config/solana/id.json) mocha --import=tsx tests/**/*.ts"
+    "test": "KEYPAIR=$(solana config get | grep Keypair | cut -b 15-) && cross-env SIGNER=$(cat $KEYPAIR) mocha --import=tsx tests/**/*.ts"
   },
   "dependencies": {
     "@solana/web3.js": "^1.91.8"
