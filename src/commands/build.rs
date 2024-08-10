@@ -1,3 +1,4 @@
+use std::fmt::format;
 use std::{env, fs};
 use std::fs::create_dir_all;
 use std::io;
@@ -11,7 +12,7 @@ use crate::commands::common::DEFAULT_LINKER;
 
 pub fn build() -> Result<()> {
     // Solana SDK and toolchain paths
-    let home_dir = env::var("HOME").expect("Could not find home directory");
+    let home_dir = env::var("HOME").expect("❌ Could not find $HOME directory");
     let solana_sdk = format!(
         "{}/.local/share/solana/install/active_release/bin/sdk/sbf/dependencies",
         home_dir
@@ -19,6 +20,11 @@ pub fn build() -> Result<()> {
     let llvm_dir = format!("{}/platform-tools/llvm", solana_sdk);
     let clang = format!("{}/bin/clang", llvm_dir);
     let ld = format!("{}/bin/ld.lld", llvm_dir);
+
+    // 
+    if !Path::new(&solana_sdk).exists() {
+        return Err(Error::msg(["❌ Solana platform-tools not found at: ", &solana_sdk].concat()))
+    }
 
     // Set src/out directory and compiler flags
     let src = "src";
