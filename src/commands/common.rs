@@ -1,3 +1,11 @@
+use serde::Deserialize;
+
+#[derive(Deserialize, Debug)]
+pub struct SolanaConfig {
+  pub releases_dir: String,
+  pub active_release_dir: String,
+}
+
 pub const DEFAULT_PROGRAM: &str = r#".globl entrypoint
 entrypoint:
     lddw r1, message

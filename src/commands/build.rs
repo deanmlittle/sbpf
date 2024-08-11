@@ -3,29 +3,37 @@ use std::io;
 use std::path::Path;
 use std::process::Command;
 use std::time::Instant;
-use std::{env, fs};
+use std::fs;
+use anyhow::{Result, Error};
+use dirs::home_dir;
 
-use anyhow::{Error, Ok, Result};
-
-use crate::commands::common::DEFAULT_LINKER;
+use crate::commands::common::{SolanaConfig, DEFAULT_LINKER};
 
 pub fn build() -> Result<()> {
-    // Solana SDK and toolchain paths
-    let home_dir = env::var("HOME").expect("❌ Could not find $HOME directory");
-    let solana_sdk = format!(
-        "{}/.local/share/solana/install/active_release/bin/sdk/sbf/dependencies",
-        home_dir
-    );
-    let llvm_dir = format!("{}/platform-tools/llvm", solana_sdk);
-    let clang = format!("{}/bin/clang", llvm_dir);
-    let ld = format!("{}/bin/ld.lld", llvm_dir);
+    // Construct the path to the config file
+    let home_dir = home_dir().expect("❌ Could not find $HOME directory");
+    // Solana Config path
+    let config_path = home_dir.join(".config/solana/install/config.yml");
 
-    //
+    if !Path::new(&config_path).exists() {
+        return Err(Error::msg("❌ Solana config not found. Please install the Solana CLI:\n\nhttps://docs.solanalabs.com/cli/install"))
+    }
+
+    // Read the file contents
+    let config_content = fs::read_to_string(config_path)?;
+    
+    // Parse the YAML file
+    let solana_config: SolanaConfig = serde_yaml::from_str(&config_content)?;
+
+    // Solana SDK and toolchain paths
+    let platform_tools = [solana_config.active_release_dir, "/bin/sdk/sbf/dependencies/platform-tools".to_owned()].concat();
+    let llvm_dir = [platform_tools.clone(), "/llvm".to_owned()].concat();
+    let clang = [llvm_dir.clone(), "/bin/clang".to_owned()].concat();
+    let ld = [llvm_dir.clone(), "/bin/ld.lld".to_owned()].concat();
+
+    // Check for platform tools
     if !Path::new(&llvm_dir).exists() {
-        return Err(Error::msg(
-            ["❌ Solana platform-tools not found at: ", &solana_sdk, "\n\nIf you have already installed the Solana CLI, try manually installing build tools:\n\ncargo build-sbf --force-tools-install
-"].concat(),
-        ));
+        return Err(Error::msg(format!("❌ Solana platform-tools not found. To manually install, please download the latest release here: \n\nhttps://github.com/anza-xyz/platform-tools/releases\n\nThen unzip to this directory and try again:\n\n{}", &platform_tools)))
     }
 
     // Set src/out directory and compiler flags
