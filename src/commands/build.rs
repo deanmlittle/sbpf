@@ -21,9 +21,10 @@ pub fn build() -> Result<()> {
     let ld = format!("{}/bin/ld.lld", llvm_dir);
 
     //
-    if !Path::new(&solana_sdk).exists() {
+    if !Path::new(&llvm_dir).exists() {
         return Err(Error::msg(
-            ["❌ Solana platform-tools not found at: ", &solana_sdk].concat(),
+            ["❌ Solana platform-tools not found at: ", &solana_sdk, "\n\nIf you have already installed the Solana CLI, try manually installing build tools:\n\ncargo build-sbf --force-tools-install
+"].concat(),
         ));
     }
 
