@@ -15,3 +15,4 @@ thiserror = "1.0.63"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 dirs = "4.0" # For easily getting the home directory
+solana_rbpf = "0.8.5"
