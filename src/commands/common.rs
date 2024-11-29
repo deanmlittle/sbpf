@@ -2,11 +2,11 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct SolanaConfig {
-  pub releases_dir: String,
-  pub active_release_dir: String,
+    pub releases_dir: String,
+    pub active_release_dir: String,
 }
 
-pub const DEFAULT_PROGRAM: &str = r#".globl entrypoint
+pub const PROGRAM: &str = r#".globl entrypoint
 entrypoint:
     lddw r1, message
     lddw r2, 14
@@ -81,7 +81,7 @@ pub const PACKAGE_JSON: &str = r#"{
 }
 "#;
 
-pub const TESTS: &str = r#"
+pub const TS_TESTS: &str = r#"
 import { Connection, Keypair, Transaction, TransactionInstruction } from "@solana/web3.js"
 import programSeed from "../deploy/default_project_name-keypair.json"
 
@@ -146,3 +146,47 @@ pub const TSCONFIG: &str = r#"
     }
 }
 "#;
+
+pub const CARGO_TOML: &str = r#"[package]
+name = "default_project_name"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[dev-dependencies]
+mollusk-svm = "0.0.11"
+solana-sdk = "2.1.0"
+
+[features]
+test-sbf = []"#;
+
+pub const RUST_TESTS: &str = r#"#[cfg(test)]
+mod tests {
+    use mollusk_svm::{result::Check, Mollusk};
+    use solana_sdk::{instruction::Instruction, pubkey::Pubkey};
+
+    #[test]
+    fn test_hello_world() {
+        let program_id_keypair_bytes = std::fs::read("deploy/default_project_name-keypair.json").unwrap()
+            [..32]
+            .try_into()
+            .expect("slice with incorrect length");
+        let program_id = Pubkey::new_from_array(program_id_keypair_bytes);
+
+        let instruction = Instruction::new_with_bytes(
+            program_id,
+            &[],
+            vec![]
+        );
+
+        let mollusk = Mollusk::new(&program_id, "deploy/default_project_name");
+
+        let result = mollusk.process_and_validate_instruction(
+            &instruction,
+            &[],
+            &[Check::success()]
+        );
+        assert!(!result.program_result.is_err());
+    }
+}"#;

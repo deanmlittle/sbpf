@@ -1,11 +1,11 @@
+use anyhow::{Error, Result};
+use dirs::home_dir;
+use std::fs;
 use std::fs::create_dir_all;
 use std::io;
 use std::path::Path;
 use std::process::Command;
 use std::time::Instant;
-use std::fs;
-use anyhow::{Result, Error};
-use dirs::home_dir;
 
 use crate::commands::common::{SolanaConfig, DEFAULT_LINKER};
 
@@ -16,24 +16,28 @@ pub fn build() -> Result<()> {
     let config_path = home_dir.join(".config/solana/install/config.yml");
 
     if !Path::new(&config_path).exists() {
-        return Err(Error::msg("❌ Solana config not found. Please install the Solana CLI:\n\nhttps://docs.solanalabs.com/cli/install"))
+        return Err(Error::msg("❌ Solana config not found. Please install the Solana CLI:\n\nhttps://docs.solanalabs.com/cli/install"));
     }
 
     // Read the file contents
     let config_content = fs::read_to_string(config_path)?;
-    
+
     // Parse the YAML file
     let solana_config: SolanaConfig = serde_yaml::from_str(&config_content)?;
 
     // Solana SDK and toolchain paths
-    let platform_tools = [solana_config.active_release_dir, "/bin/sdk/sbf/dependencies/platform-tools".to_owned()].concat();
+    let platform_tools = [
+        solana_config.active_release_dir,
+        "/bin/sdk/sbf/dependencies/platform-tools".to_owned(),
+    ]
+    .concat();
     let llvm_dir = [platform_tools.clone(), "/llvm".to_owned()].concat();
     let clang = [llvm_dir.clone(), "/bin/clang".to_owned()].concat();
     let ld = [llvm_dir.clone(), "/bin/ld.lld".to_owned()].concat();
 
     // Check for platform tools
     if !Path::new(&llvm_dir).exists() {
-        return Err(Error::msg(format!("❌ Solana platform-tools not found. To manually install, please download the latest release here: \n\nhttps://github.com/anza-xyz/platform-tools/releases\n\nThen unzip to this directory and try again:\n\n{}", &platform_tools)))
+        return Err(Error::msg(format!("❌ Solana platform-tools not found. To manually install, please download the latest release here: \n\nhttps://github.com/anza-xyz/platform-tools/releases\n\nThen unzip to this directory and try again:\n\n{}", &platform_tools)));
     }
 
     // Set src/out directory and compiler flags
@@ -92,7 +96,7 @@ pub fn build() -> Result<()> {
         // Check if a custom linker file exists
         if !Path::new(&linker_file).exists() {
             if !Path::new(&default_linker).exists() {
-                fs::create_dir(".sbpf").unwrap_or( ());
+                fs::create_dir(".sbpf").unwrap_or(());
                 fs::write(&default_linker, DEFAULT_LINKER)?;
             }
             linker_file = default_linker;
