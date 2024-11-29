@@ -33,7 +33,6 @@ pub fn init(name: Option<String>, ts_tests: bool) -> Result<(), Error> {
         fs::create_dir_all(&project_path)?;
         fs::create_dir_all(project_path.join("src").join(&project_name))?;
         fs::create_dir_all(project_path.join("deploy"))?;
-        fs::create_dir_all(project_path.join("tests"))?;
 
         fs::write(
             project_path.join("README.md"),
@@ -63,6 +62,7 @@ pub fn init(name: Option<String>, ts_tests: bool) -> Result<(), Error> {
                 PACKAGE_JSON.replace("default_project_name", &project_name),
             )?;
             fs::write(project_path.join("tsconfig.json"), TSCONFIG)?;
+            fs::create_dir_all(project_path.join("tests"))?;
             fs::write(
                 project_path
                     .join("tests")
@@ -77,10 +77,6 @@ pub fn init(name: Option<String>, ts_tests: bool) -> Result<(), Error> {
         } else {
             fs::write(
                 project_path.join("src").join("lib.rs"),
-                "// src/lib.rs is required for Rust tests\n",
-            )?;
-            fs::write(
-                project_path.join("tests").join("lib.rs"),
                 RUST_TESTS.replace("default_project_name", &project_name),
             )?;
             fs::write(

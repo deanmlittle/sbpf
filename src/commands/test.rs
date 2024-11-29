@@ -1,8 +1,35 @@
 use anyhow::{Error, Result};
-use std::{io, path::Path, process::Command};
+use std::{fs, io, path::Path, process::Command};
 
 pub fn test() -> Result<(), Error> {
     println!("🧪 Running tests");
+
+    let deploy_dir = Path::new("deploy");
+
+    fn has_so_files(dir: &Path) -> bool {
+        if dir.exists() && dir.is_dir() {
+            match fs::read_dir(dir) {
+                Ok(entries) => entries
+                    .filter_map(Result::ok)
+                    .any(|entry| {
+                        entry
+                            .path()
+                            .extension()
+                            .and_then(|ext| ext.to_str())
+                            .map(|ext| ext == "so")
+                            .unwrap_or(false)
+                    }),
+                Err(_) => false,
+            }
+        } else {
+            false
+        }
+    }
+
+    if !has_so_files(deploy_dir) {
+        println!("🔄 No .so files found in 'deploy' directory. Running build...");
+        crate::commands::build::build()?;
+    }
 
     let has_cargo = Path::new("Cargo.toml").exists();
     let has_package_json = Path::new("package.json").exists();
@@ -11,6 +38,8 @@ pub fn test() -> Result<(), Error> {
         (true, _) => {
             let output = Command::new("cargo")
                 .arg("test-sbf")
+                .arg("--")
+                .arg("--nocapture")
                 .env("RUST_BACKTRACE", "1")
                 .status()?;
 
