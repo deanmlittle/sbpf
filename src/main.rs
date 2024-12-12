@@ -1,7 +1,7 @@
 pub mod commands;
 use anyhow::Error;
 use clap::{Args, Parser, Subcommand};
-use commands::{build, clean, deploy, init, test};
+use commands::{build, clean, deploy, disassemble, init, test};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -25,6 +25,8 @@ enum Commands {
     E2E(DeployArgs),
     #[command(about = "Clean up build and deploy artifacts")]
     Clean,
+    #[command(about = "Disassemble a compiled program")]
+    Disassemble(DisassembleArgs),
 }
 
 #[derive(Args)]
@@ -44,6 +46,13 @@ struct DeployArgs {
     url: Option<String>,
 }
 
+#[derive(Args)]
+struct DisassembleArgs {
+    path: Option<String>,
+    #[arg(short = 'o', long = "output")]
+    outfile: Option<String>,
+}
+
 fn main() -> Result<(), Error> {
     let cli = Cli::parse();
 
@@ -58,5 +67,6 @@ fn main() -> Result<(), Error> {
             test()
         }
         Commands::Clean => clean(),
+        Commands::Disassemble(args) => disassemble(args.path.clone(), args.outfile.clone()),
     }
 }
