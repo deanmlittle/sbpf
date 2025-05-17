@@ -8,13 +8,12 @@ pub struct SolanaConfig {
 
 pub const DEFAULT_PROGRAM: &str = r#".globl entrypoint
 entrypoint:
-    lddw r1, message
-    lddw r2, 14
-    call sol_log_
-    exit
-.extern sol_log_
+  lddw r1, message
+  lddw r2, 14
+  call sol_log_
+  exit
 .rodata
-    message: .ascii "Hello, Solana!"
+  message: .ascii "Hello, Solana!"
 "#;
 
 pub const DEFAULT_LINKER: &str = r#"PHDRS

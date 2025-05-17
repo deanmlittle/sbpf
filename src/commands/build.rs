@@ -26,14 +26,19 @@ pub fn build() -> Result<()> {
     let solana_config: SolanaConfig = serde_yaml::from_str(&config_content)?;
 
     // Solana SDK and toolchain paths
-    let platform_tools = [solana_config.active_release_dir, "/bin/sdk/sbf/dependencies/platform-tools".to_owned()].concat();
+    let mut platform_tools = [solana_config.active_release_dir.clone(), "/bin/sdk/sbf/dependencies/platform-tools".to_owned()].concat();
     let llvm_dir = [platform_tools.clone(), "/llvm".to_owned()].concat();
     let clang = [llvm_dir.clone(), "/bin/clang".to_owned()].concat();
     let ld = [llvm_dir.clone(), "/bin/ld.lld".to_owned()].concat();
 
     // Check for platform tools
     if !Path::new(&llvm_dir).exists() {
-        return Err(Error::msg(format!("❌ Solana platform-tools not found. To manually install, please download the latest release here: \n\nhttps://github.com/anza-xyz/platform-tools/releases\n\nThen unzip to this directory and try again:\n\n{}", &platform_tools)))
+        // Try new platform tools
+        let platform_tools = [solana_config.active_release_dir.clone(), "/bin/platform-tools-sdk/sbf/dependencies/platform-tools".to_owned()].concat();
+        // Check for platform tools
+        if !Path::new(&llvm_dir).exists() {
+            return Err(Error::msg(format!("❌ Solana platform-tools not found. To manually install, please download the latest release here: \n\nhttps://github.com/anza-xyz/platform-tools/releases\n\nThen unzip to this directory and try again:\n\n{}", &platform_tools)))
+        }
     }
 
     // Set src/out directory and compiler flags
