@@ -28,8 +28,14 @@ enum Commands {
 }
 
 #[derive(Args)]
-struct InitArgs {
+pub struct InitArgs {
     name: Option<String>,
+    #[arg(
+        short,
+        long = "ts-tests",
+        help = "Initialize with TypeScript tests instead of Mollusk Rust tests"
+    )]
+    ts_tests: bool,
 }
 
 #[derive(Args)]
@@ -42,7 +48,7 @@ fn main() -> Result<(), Error> {
     let cli = Cli::parse();
 
     match &cli.command {
-        Commands::Init(args) => init(args.name.clone()),
+        Commands::Init(args) => init(args.name.clone(), args.ts_tests),
         Commands::Build => build(),
         Commands::Deploy(args) => deploy(args.name.clone(), args.url.clone()),
         Commands::Test => test(),

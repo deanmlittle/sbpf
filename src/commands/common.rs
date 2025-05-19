@@ -2,11 +2,11 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct SolanaConfig {
-  pub releases_dir: String,
-  pub active_release_dir: String,
+    pub releases_dir: String,
+    pub active_release_dir: String,
 }
 
-pub const DEFAULT_PROGRAM: &str = r#".globl entrypoint
+pub const PROGRAM: &str = r#".globl entrypoint
 entrypoint:
   lddw r1, message
   lddw r2, 14
@@ -80,7 +80,7 @@ pub const PACKAGE_JSON: &str = r#"{
 }
 "#;
 
-pub const TESTS: &str = r#"
+pub const TS_TESTS: &str = r#"
 import { Connection, Keypair, Transaction, TransactionInstruction } from "@solana/web3.js"
 import programSeed from "../deploy/default_project_name-keypair.json"
 
@@ -155,8 +155,7 @@ edition = "2021"
 
 [dev-dependencies]
 mollusk-svm = "0.1.5"
-solana-pubkey = "2.2.1"
-solana-instruction = "2.2.1"
+solana-sdk = "2.2.1"
 
 [features]
 test-sbf = []"#;

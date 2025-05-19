@@ -1,11 +1,11 @@
+use anyhow::{Error, Result};
+use dirs::home_dir;
+use std::fs;
 use std::fs::create_dir_all;
 use std::io;
 use std::path::Path;
 use std::process::Command;
 use std::time::Instant;
-use std::fs;
-use anyhow::{Result, Error};
-use dirs::home_dir;
 
 use crate::commands::common::{SolanaConfig, DEFAULT_LINKER};
 
@@ -21,7 +21,7 @@ pub fn build() -> Result<()> {
 
     // Read the file contents
     let config_content = fs::read_to_string(config_path)?;
-    
+
     // Parse the YAML file
     let solana_config: SolanaConfig = serde_yaml::from_str(&config_content)?;
 
@@ -33,7 +33,7 @@ pub fn build() -> Result<()> {
 
     // Check for platform tools
     if !Path::new(&llvm_dir).exists() {
-        return Err(Error::msg(format!("❌ Solana platform-tools not found. To manually install, please download the latest release here: \n\nhttps://github.com/anza-xyz/platform-tools/releases\n\nThen unzip to this directory and try again:\n\n{}", &platform_tools)))
+        return Err(Error::msg(format!("❌ Solana platform-tools not found. To manually install, please download the latest release here: \n\nhttps://github.com/anza-xyz/platform-tools/releases\n\nThen unzip to this directory and try again:\n\n{}", &platform_tools)));
     }
 
     // Set src/out directory and compiler flags
@@ -88,7 +88,7 @@ pub fn build() -> Result<()> {
         // Check if a custom linker file exists
         if !Path::new(&linker_file).exists() {
             if !Path::new(&default_linker).exists() {
-                fs::create_dir(".sbpf").unwrap_or( ());
+                fs::create_dir(".sbpf").unwrap_or(());
                 fs::write(&default_linker, DEFAULT_LINKER)?;
             }
             linker_file = default_linker;

@@ -1,16 +1,16 @@
-use crate::commands::common::TESTS;
-
-use super::common::{DEFAULT_PROGRAM, GITIGNORE, PACKAGE_JSON, README, TSCONFIG};
+use super::common::{
+    CARGO_TOML, GITIGNORE, PACKAGE_JSON, PROGRAM, README, RUST_TESTS, TSCONFIG, TS_TESTS,
+};
 use anyhow::{Error, Result};
 use ed25519_dalek::SigningKey;
 use rand::rngs::OsRng;
 use std::fs;
 use std::io::{self, Write};
-use std::path::Path;
+use std::process::Command;
 
-pub fn init(name: Option<String>) -> Result<(), Error> {
+pub fn init(name: Option<String>, ts_tests: bool) -> Result<(), Error> {
     let project_name = match name {
-        Some(name) => name,
+        Some(name) => name.clone(),
         None => loop {
             print!("What is the name of your project? ");
             io::stdout().flush()?;
@@ -25,34 +25,29 @@ pub fn init(name: Option<String>) -> Result<(), Error> {
             }
         },
     };
-    let project_path = Path::new(&project_name);
+
+    let current_dir = std::env::current_dir()?;
+    let project_path = current_dir.join(&project_name);
 
     if !project_path.exists() {
-        // Create project path and subdirectories
+        fs::create_dir_all(&project_path)?;
         fs::create_dir_all(project_path.join("src").join(&project_name))?;
-        fs::create_dir(project_path.join("deploy"))?;
-        fs::create_dir(project_path.join("tests"))?;
+        fs::create_dir_all(project_path.join("deploy"))?;
 
-        // Create Readme
         fs::write(
             project_path.join("README.md"),
             README.replace("default_project_name", &project_name),
         )?;
-        // Create .gitignore
         fs::write(project_path.join(".gitignore"), GITIGNORE)?;
 
-        // Create test
         fs::write(
-            project_path.join(format!("tests/{}.test.ts", project_name)),
-            TESTS.replace("default_project_name", &project_name),
+            project_path
+                .join("src")
+                .join(&project_name)
+                .join(format!("{}.s", project_name)),
+            PROGRAM,
         )?;
 
-        // Create default program
-        fs::write(
-            project_path.join(format!("src/{}/{}.s", project_name, project_name)),
-            DEFAULT_PROGRAM,
-        )?;
-        // Create deploy keypair
         let mut rng = OsRng;
         fs::write(
             project_path
@@ -60,14 +55,41 @@ pub fn init(name: Option<String>) -> Result<(), Error> {
                 .join(format!("{}-keypair.json", project_name)),
             serde_json::json!(SigningKey::generate(&mut rng).to_keypair_bytes()[..]).to_string(),
         )?;
-        // Create package.json
-        fs::write(
-            project_path.join("package.json"),
-            PACKAGE_JSON.replace("default_project_name", &project_name),
-        )?;
-        // Create tsconfig.json
-        fs::write(project_path.join("tsconfig.json"), TSCONFIG)?;
-        println!("✅ Project '{}' initialized successfully!", project_name);
+
+        if ts_tests {
+            fs::write(
+                project_path.join("package.json"),
+                PACKAGE_JSON.replace("default_project_name", &project_name),
+            )?;
+            fs::write(project_path.join("tsconfig.json"), TSCONFIG)?;
+            fs::create_dir_all(project_path.join("tests"))?;
+            fs::write(
+                project_path
+                    .join("tests")
+                    .join(format!("{}.test.ts", project_name)),
+                TS_TESTS.replace("default_project_name", &project_name),
+            )?;
+
+            Command::new("yarn")
+                .current_dir(&project_path)
+                .arg("install")
+                .status()?;
+        } else {
+            fs::write(
+                project_path.join("src").join("lib.rs"),
+                RUST_TESTS.replace("default_project_name", &project_name),
+            )?;
+            fs::write(
+                project_path.join("Cargo.toml"),
+                CARGO_TOML.replace("default_project_name", &project_name),
+            )?;
+        }
+
+        println!(
+            "✅ Project '{}' initialized successfully with {} tests",
+            project_name,
+            if ts_tests { "TypeScript" } else { "Rust" }
+        );
         Ok(())
     } else {
         println!("⚠️ Project '{}' already exists!", project_name);
