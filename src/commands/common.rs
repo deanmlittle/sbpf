@@ -163,8 +163,8 @@ test-sbf = []"#;
 pub const RUST_TESTS: &str = r#"#[cfg(test)]
 mod tests {
     use mollusk_svm::{result::Check, Mollusk};
-    use solana_pubkey::Pubkey;
-    use solana_instruction::Instruction;
+    use solana_sdk::pubkey::Pubkey;
+    use solana_sdk::instruction::Instruction;
 
     #[test]
     fn test_hello_world() {
