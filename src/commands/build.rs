@@ -16,7 +16,7 @@ pub fn build() -> Result<()> {
     let config_path = home_dir.join(".config/solana/install/config.yml");
 
     if !Path::new(&config_path).exists() {
-        return Err(Error::msg("❌ Solana config not found. Please install the Solana CLI:\n\nhttps://docs.solanalabs.com/cli/install"))
+        return Err(Error::msg("❌ Solana config not found. Please install the Solana CLI:\n\nhttps://docs.anza.xyz/cli/install"));
     }
 
     // Read the file contents
@@ -26,19 +26,14 @@ pub fn build() -> Result<()> {
     let solana_config: SolanaConfig = serde_yaml::from_str(&config_content)?;
 
     // Solana SDK and toolchain paths
-    let mut platform_tools = [solana_config.active_release_dir.clone(), "/bin/sdk/sbf/dependencies/platform-tools".to_owned()].concat();
+    let platform_tools = [solana_config.active_release_dir.clone(), "/bin/platform-tools-sdk/sbf/dependencies/platform-tools".to_owned()].concat();
     let llvm_dir = [platform_tools.clone(), "/llvm".to_owned()].concat();
     let clang = [llvm_dir.clone(), "/bin/clang".to_owned()].concat();
     let ld = [llvm_dir.clone(), "/bin/ld.lld".to_owned()].concat();
 
     // Check for platform tools
     if !Path::new(&llvm_dir).exists() {
-        // Try new platform tools
-        let platform_tools = [solana_config.active_release_dir.clone(), "/bin/platform-tools-sdk/sbf/dependencies/platform-tools".to_owned()].concat();
-        // Check for platform tools
-        if !Path::new(&llvm_dir).exists() {
-            return Err(Error::msg(format!("❌ Solana platform-tools not found. To manually install, please download the latest release here: \n\nhttps://github.com/anza-xyz/platform-tools/releases\n\nThen unzip to this directory and try again:\n\n{}", &platform_tools)))
-        }
+        return Err(Error::msg(format!("❌ Solana platform-tools not found. To manually install, please download the latest release here: \n\nhttps://github.com/anza-xyz/platform-tools/releases\n\nThen unzip to this directory and try again:\n\n{}", &platform_tools)))
     }
 
     // Set src/out directory and compiler flags
@@ -47,7 +42,6 @@ pub fn build() -> Result<()> {
     let deploy = "deploy";
     let arch = "-target";
     let arch_target = "sbf";
-    let march = "-march=bpfel+solana";
 
     // Create necessary directories
     create_dir_all(out)?;
@@ -58,7 +52,6 @@ pub fn build() -> Result<()> {
         clang: &str,
         arch: &str,
         arch_target: &str,
-        march: &str,
         out: &str,
         src: &str,
         filename: &str,
@@ -69,8 +62,6 @@ pub fn build() -> Result<()> {
             .args([
                 arch,
                 arch_target,
-                march,
-                "-Os",
                 "-c",
                 "-o",
                 &output_file,
@@ -137,7 +128,7 @@ pub fn build() -> Result<()> {
                 if Path::new(&asm_file).exists() {
                     println!("🔄 Building \"{}\"", subdir);
                     let start = Instant::now();
-                    compile_assembly(&clang, arch, arch_target, march, out, src, subdir)?;
+                    compile_assembly(&clang, arch, arch_target, out, src, subdir)?;
                     build_shared_object(&ld, subdir)?;
                     let duration = start.elapsed();
                     println!(

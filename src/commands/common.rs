@@ -145,3 +145,49 @@ pub const TSCONFIG: &str = r#"
     }
 }
 "#;
+
+pub const CARGO_TOML: &str = r#"[package]
+name = "default_project_name"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[dev-dependencies]
+mollusk-svm = "0.1.5"
+solana-pubkey = "2.2.1"
+solana-instruction = "2.2.1"
+
+[features]
+test-sbf = []"#;
+
+pub const RUST_TESTS: &str = r#"#[cfg(test)]
+mod tests {
+    use mollusk_svm::{result::Check, Mollusk};
+    use solana_pubkey::Pubkey;
+    use solana_instruction::Instruction;
+
+    #[test]
+    fn test_hello_world() {
+        let program_id_keypair_bytes = std::fs::read("deploy/default_project_name-keypair.json").unwrap()
+            [..32]
+            .try_into()
+            .expect("slice with incorrect length");
+        let program_id = Pubkey::new_from_array(program_id_keypair_bytes);
+
+        let instruction = Instruction::new_with_bytes(
+            program_id,
+            &[],
+            vec![]
+        );
+
+        let mollusk = Mollusk::new(&program_id, "deploy/default_project_name");
+
+        let result = mollusk.process_and_validate_instruction(
+            &instruction,
+            &[],
+            &[Check::success()]
+        );
+        assert!(!result.program_result.is_err());
+    }
+}"#;
