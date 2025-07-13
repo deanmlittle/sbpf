@@ -146,6 +146,8 @@ pub const TSCONFIG: &str = r#"
 }
 "#;
 
+// mollusk-svm 0.1.5
+// solana-sdk 2.2.1
 pub const CARGO_TOML: &str = r#"[package]
 name = "default_project_name"
 version = "0.1.0"
@@ -154,8 +156,8 @@ edition = "2021"
 [dependencies]
 
 [dev-dependencies]
-mollusk-svm = "0.1.5"
-solana-sdk = "2.2.1"
+mollusk-svm = "0.0.11"
+solana-sdk = "2.1.0"
 
 [features]
 test-sbf = []"#;
