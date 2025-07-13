@@ -70,10 +70,7 @@ impl Program {
         current_offset += padding;
 
         if !is_static {
-            let mut dynamic_section = SectionType::Dynamic(DynamicSection::new());
-            dynamic_section.set_offset(current_offset);
-            current_offset += dynamic_section.size();
-            section_names.push(dynamic_section.name().to_string());
+
 
             let mut symbol_names = Vec::new();
             let mut dyn_syms = Vec::new();
@@ -110,18 +107,25 @@ impl Program {
                     rel_dyns.push(RelDyn::new(offset + elf_header.e_entry, rel_type as u64, 0));
                 }
             }
+            let mut dynamic_section = SectionType::Dynamic(DynamicSection::new((section_names.iter().map(|name| name.len() + 1).sum::<usize>() + 1) as u32));
+            dynamic_section.set_offset(current_offset);
+            if let SectionType::Dynamic(ref mut dynamic_section) = dynamic_section {
+                dynamic_section.set_rel_count(rel_count);
+            }
+            current_offset += dynamic_section.size();
+            section_names.push(dynamic_section.name().to_string());
 
-            let mut dynsym_section = DynSymSection::new(dyn_syms);
+            let mut dynsym_section = DynSymSection::new((section_names.iter().map(|name| name.len() + 1).sum::<usize>() + 1) as u32, dyn_syms);
             dynsym_section.set_offset(current_offset);
             current_offset += dynsym_section.size();
             section_names.push(dynsym_section.name().to_string());
 
-            let mut dynstr_section = DynStrSection::new(symbol_names);
+            let mut dynstr_section = DynStrSection::new((section_names.iter().map(|name| name.len() + 1).sum::<usize>() + 1) as u32, symbol_names);
             dynstr_section.set_offset(current_offset);
             current_offset += dynstr_section.size();
             section_names.push(dynstr_section.name().to_string());
 
-            let mut rel_dyn_section = RelDynSection::new(rel_dyns);
+            let mut rel_dyn_section = RelDynSection::new((section_names.iter().map(|name| name.len() + 1).sum::<usize>() + 1) as u32, rel_dyns);
             rel_dyn_section.set_offset(current_offset);
             current_offset += rel_dyn_section.size();
             section_names.push(rel_dyn_section.name().to_string());
@@ -129,13 +133,12 @@ impl Program {
             if let SectionType::Dynamic(ref mut dynamic_section) = dynamic_section {
                 dynamic_section.set_rel_offset(rel_dyn_section.offset());
                 dynamic_section.set_rel_size(rel_dyn_section.size());
-                dynamic_section.set_rel_count(rel_count);
                 dynamic_section.set_dynsym_offset(dynsym_section.offset());
                 dynamic_section.set_dynstr_offset(dynstr_section.offset());
                 dynamic_section.set_dynstr_size(dynstr_section.size());
             }
 
-            let mut shstrtab_section = ShStrTabSection::new(section_names);
+            let mut shstrtab_section = ShStrTabSection::new((section_names.iter().map(|name| name.len() + 1).sum::<usize>() + 1) as u32, section_names);
             shstrtab_section.set_offset(current_offset);
             current_offset += shstrtab_section.size();
 
@@ -165,7 +168,7 @@ impl Program {
                 section_names.push(section.name().to_string());
             }
 
-            let mut shstrtab_section = ShStrTabSection::new(section_names);
+            let mut shstrtab_section = ShStrTabSection::new(section_names.iter().map(|name| name.len() + 1).sum::<usize>() as u32, section_names);
             shstrtab_section.set_offset(current_offset);
             current_offset += shstrtab_section.size();
             sections.push(SectionType::ShStrTab(shstrtab_section));

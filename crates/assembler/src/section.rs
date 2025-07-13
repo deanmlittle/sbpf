@@ -270,14 +270,16 @@ impl Section for NullSection {
 #[derive(Debug)]
 pub struct ShStrTabSection {
     name: String,
+    name_offset: u32,
     section_names: Vec<String>,
     offset: u64,
 }
 
 impl ShStrTabSection {
-    pub fn new(section_names: Vec<String>) -> Self {
+    pub fn new(name_offset: u32, section_names: Vec<String>) -> Self {
         Self {
             name: String::from(".shstrtab"),
+            name_offset,
             section_names: {
                 let mut names = section_names;
                 names.push(".shstrtab".to_string());
@@ -293,7 +295,7 @@ impl ShStrTabSection {
 
     pub fn section_header_bytecode(&self) -> Vec<u8> {
         SectionHeader::new(
-            49,
+            self.name_offset,
             SectionHeader::SHT_STRTAB,
             0,
             0,
@@ -356,6 +358,7 @@ impl Section for ShStrTabSection {
 #[derive(Debug)]
 pub struct DynamicSection {
     name: String,
+    name_offset: u32,
     offset: u64,
     rel_offset: u64,
     rel_size: u64,
@@ -366,9 +369,10 @@ pub struct DynamicSection {
 }
 
 impl DynamicSection {
-    pub fn new() -> Self {
+    pub fn new(name_offset: u32) -> Self {
         Self {
             name: String::from(".dynamic"),
+            name_offset,
             offset: 0,
             rel_offset: 0,
             rel_size: 0,
@@ -409,7 +413,7 @@ impl DynamicSection {
 
     pub fn section_header_bytecode(&self) -> Vec<u8> {
         SectionHeader::new(
-            15,
+            self.name_offset,
             SectionHeader::SHT_DYNAMIC,
             SectionHeader::SHF_ALLOC | SectionHeader::SHF_WRITE,
             self.offset,
@@ -452,8 +456,10 @@ impl Section for DynamicSection {
         bytes.extend_from_slice(&0x10_u64.to_le_bytes());  // Constant: 16 bytes per entry
         
         // DT_RELCOUNT: number of relative relocation entries
-        bytes.extend_from_slice(&0x6fffff_fa_u64.to_le_bytes());
-        bytes.extend_from_slice(&self.rel_count.to_le_bytes());
+        if self.rel_count > 0 {
+            bytes.extend_from_slice(&0x6fffff_fa_u64.to_le_bytes());
+            bytes.extend_from_slice(&self.rel_count.to_le_bytes());
+        }
         
         // DT_SYMTAB
         bytes.extend_from_slice(&0x06_u64.to_le_bytes());
@@ -483,22 +489,27 @@ impl Section for DynamicSection {
     }
 
     fn size(&self) -> u64 {
-        // 11 * 16
-        11 << 4
+        if self.rel_count > 0 {
+            return 11 * 16;
+        } else {
+            return 10 * 16;
+        }
     }
 }
 
 #[derive(Debug)]
 pub struct DynStrSection {
     name: String,
+    name_offset: u32,
     symbol_names: Vec<String>,
     offset: u64,
 }
 
 impl DynStrSection {
-    pub fn new(symbol_names: Vec<String>) -> Self {
+    pub fn new(name_offset: u32, symbol_names: Vec<String>) -> Self {
         Self {
             name: String::from(".dynstr"),
+            name_offset,
             symbol_names,
             offset: 0,
         }
@@ -510,7 +521,7 @@ impl DynStrSection {
 
     pub fn section_header_bytecode(&self) -> Vec<u8> {
         SectionHeader::new(
-            32,  // Section index
+            self.name_offset,
             SectionHeader::SHT_STRTAB,
             SectionHeader::SHF_ALLOC,  // Allocatable section
             self.offset,
@@ -566,14 +577,16 @@ impl Section for DynStrSection {
 #[derive(Debug)]
 pub struct DynSymSection {
     name: String,
+    name_offset: u32,
     offset: u64,
     symbols: Vec<DynamicSymbol>,
 }
 
 impl DynSymSection {
-    pub fn new(symbols: Vec<DynamicSymbol>) -> Self {
+    pub fn new(name_offset: u32, symbols: Vec<DynamicSymbol>) -> Self {
         Self {
             name: String::from(".dynsym"),
+            name_offset,
             offset: 0,
             symbols,
         }
@@ -586,7 +599,7 @@ impl DynSymSection {
     pub fn section_header_bytecode(&self) -> Vec<u8> {
         let flags = SectionHeader::SHF_ALLOC;
         SectionHeader::new(
-            24,
+            self.name_offset,
             SectionHeader::SHT_DYNSYM,
             flags,
             self.offset,
@@ -627,14 +640,16 @@ impl Section for DynSymSection {
 #[derive(Debug)]
 pub struct RelDynSection {
     name: String,
+    name_offset: u32,
     offset: u64,
     entries: Vec<RelDyn>,
 }
 
 impl RelDynSection {
-    pub fn new(entries: Vec<RelDyn>) -> Self {
+    pub fn new(name_offset: u32, entries: Vec<RelDyn>) -> Self {
         Self {
             name: String::from(".rel.dyn"),
+            name_offset,
             offset: 0,
             entries,
         }
@@ -651,7 +666,7 @@ impl RelDynSection {
     pub fn section_header_bytecode(&self) -> Vec<u8> {
         let flags = SectionHeader::SHF_ALLOC;
         SectionHeader::new(
-            40,
+            self.name_offset,
             SectionHeader::SHT_REL,
             flags,
             self.offset,
