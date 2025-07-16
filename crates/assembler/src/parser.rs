@@ -9,7 +9,6 @@ use std::collections::HashMap;
 
 pub struct Parser {
     tokens: Vec<Token>,
-    current: usize,
 
     pub m_prog_is_static: bool,
     pub m_accum_offset: u64,
@@ -79,7 +78,7 @@ impl Parse for EquDecl {
             (
                 Token::Identifier(name, line_number),
                 Token::Comma(_),
-                Token::ImmediateValue(value, num_line_number)
+                Token::ImmediateValue(_value, _)
             ) => {
                 Some((
                     EquDecl {
@@ -164,7 +163,7 @@ impl Parse for ROData {
 
 impl ParseInstruction for Instruction {
     fn parse_instruction<'a>(tokens: &'a [Token], const_map: &HashMap<String, ImmediateValue>) -> Option<(Self, &'a [Token])> {
-        let mut next_token_num = 1;
+        let next_token_num;
         match &tokens[0] {
             Token::Opcode(opcode, line_number) => {
                 let mut opcode = opcode.clone();
@@ -457,7 +456,6 @@ fn inline_and_fold_constant_helper(tokens: &[Token]                             
             let result = match op {
                 Op::Add => value + value2.clone(),
                 Op::Sub => value - value2.clone(),
-                _ => return (Some(value), idx + 1),
             };
             inline_and_fold_constant_helper(tokens, const_map, result, idx + 2)
         }
@@ -484,7 +482,7 @@ fn inline_and_fold_constant(tokens: &[Token]                            //
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, current: 0
+        Self { tokens
             , m_prog_is_static: true
             , m_accum_offset: 0
             , m_entry_label: None
@@ -562,7 +560,7 @@ impl Parser {
                     }
                     self.m_label_offsets.insert(name.clone(), self.m_accum_offset);
                 }
-                Token::Opcode(opcode, line_number) => {
+                Token::Opcode(_opcode, line_number) => {
                     if let Some((inst, rest)) = Instruction::parse_instruction(tokens, &self.m_const_map) {
                         if inst.needs_relocation() {
                             self.m_prog_is_static = false;
@@ -589,7 +587,7 @@ impl Parser {
         // Second pass to resolve labels
         for node in &mut nodes {
             match node {
-                ASTNode::Instruction { instruction: Instruction { opcode, operands, line_number }, offset } => {
+                ASTNode::Instruction { instruction: Instruction { opcode, operands, .. }, offset } => {
                     // For jump instructions, replace label operands with relative offsets
                     if *opcode == Opcode::Ja || *opcode == Opcode::JeqImm || *opcode == Opcode::JgtImm || *opcode == Opcode::JgeImm 
                     || *opcode == Opcode::JltImm || *opcode == Opcode::JleImm || *opcode == Opcode::JsetImm || *opcode == Opcode::JneImm     

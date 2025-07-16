@@ -1,6 +1,6 @@
 use sbpf_assembler::assemble;
 
-use anyhow::{Error, Result};
+use anyhow::Result;
 use std::path::Path;
 use std::time::Instant;
 use std::fs::create_dir_all;

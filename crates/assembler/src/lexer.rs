@@ -75,20 +75,20 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>, String> {
             match c {
                 c if c.is_digit(10) => {
                     let mut number = String::new();
-                    let mut isAddr = false;
+                    let mut is_addr = false;
                     while let Some(&c) = chars.peek() {
                         if c.is_digit(10) {
                             number.push(chars.next().unwrap());
                         } else if number == "0" && c == 'x' {
                             chars.next();
-                            isAddr = true; /*  */ number = String::new();
-                        } else if isAddr && (c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f') {
+                            is_addr = true; /*  */ number = String::new();
+                        } else if is_addr && (c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f') {
                             number.push(chars.next().unwrap());
                         } else {
                             break;
                         }
                     }
-                    if isAddr {
+                    if is_addr {
                         tokens.push(Token::ImmediateValue(ImmediateValue::Addr(i64::from_str_radix(&number, 16).map_err(|_| "Invalid number")?), line_number)); 
                     } else {
                         tokens.push(Token::ImmediateValue(ImmediateValue::Int(number.parse::<i64>().map_err(|_| "Invalid number")?), line_number));

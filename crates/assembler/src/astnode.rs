@@ -265,10 +265,9 @@ impl ASTNode {
                 
                 Some((bytes, debug_map))
             },
-            ASTNode::ROData { rodata: ROData { name: _, args, line_number }, offset } => {
+            ASTNode::ROData { rodata: ROData { name: _, args, .. }, .. } => {
                 let mut bytes = Vec::new();
-                let mut line_map = HashMap::<u64, usize>::new();
-                let mut debug_map = HashMap::<u64, DebugInfo>::new();
+                let debug_map = HashMap::<u64, DebugInfo>::new();
                 for arg in args {
                     if let Token::StringLiteral(s, _) = arg {
                         // Convert string to bytes and add null terminator
@@ -286,18 +285,4 @@ impl ASTNode {
     pub fn bytecode(&self) -> Option<Vec<u8>> {
         self.bytecode_with_debug_map().map(|(bytes, _)| bytes)
     }
-}
-
-fn parse_expression(expr: &String) -> Option<(String, i32)> {
-    // Split the expression by '+' and trim whitespace
-    let parts: Vec<&str> = expr.split('+').map(str::trim).collect();
-    
-    if parts.len() == 2 {
-        // Assume the first part is the register and the second part is the offset
-        let base_reg = parts[0].to_string();
-        if let Ok(offset) = parts[1].parse::<i32>() {
-            return Some((base_reg, offset));
-        }
-    }
-    None
 }

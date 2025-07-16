@@ -1,6 +1,7 @@
 [package]
 name                   = "sbpf-assembler"
 description            = "SBPF Assembler"
+edition 			   = "2024"
 version.workspace      = true
 
 [dependencies]

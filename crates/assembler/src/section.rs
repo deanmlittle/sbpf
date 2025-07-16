@@ -35,7 +35,7 @@ pub struct CodeSection {
 
 impl CodeSection {
     pub fn new(nodes: Vec<ASTNode>, size: u64) -> Self {
-        let mut line_map = HashMap::new();
+        let line_map = HashMap::new();
         let mut debug_map = HashMap::new();
         for node in &nodes {
             if let Some((_, node_debug_map)) = node.bytecode_with_debug_map() {
@@ -178,7 +178,7 @@ impl DataSection {
     pub fn rodata(&self) -> Vec<(String, usize, String)> {
         let mut ro_data_labels = Vec::new();
         for node in &self.nodes {    
-            if let ASTNode::ROData { rodata: ROData { name, args, line_number }, offset } = node {
+            if let ASTNode::ROData { rodata: ROData { name, args, .. }, offset } = node {
                 if let Some(Token::StringLiteral(str_literal, _)) = args.get(1) {
                     ro_data_labels.push((name.clone(), offset.clone() as usize, str_literal.clone()));
                 }

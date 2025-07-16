@@ -3,14 +3,12 @@ extern crate num_derive;
 extern crate anyhow;
 
 use std::path::Path;
-use std::fs::File;
 use anyhow::{Error, Result};
 
 // Tokenizer and parser
 pub mod parser;
 pub mod lexer;
 pub mod opcode;
-pub mod instruction_verifier;
 pub mod utils;
 
 // Intermediate Representation
