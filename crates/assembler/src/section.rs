@@ -16,10 +16,15 @@ pub trait Section {
     fn bytecode(&self) -> Vec<u8> {
         Vec::new()  // Default empty bytecode
     }
-
+    
+    // fn get_size(&self) -> u64
     fn size(&self) -> u64 {
         self.bytecode().len() as u64
     }
+
+    // fn get_aligned_size(&self) -> u64
+
+    // fn section_header_bytecode(&self) -> Vec<u8>
 }
 
 // Code Section implementation
@@ -76,9 +81,6 @@ impl CodeSection {
         self.offset = offset;
     }
 
-    pub fn offset(&self) -> u64 {
-        self.offset
-    }
 
     pub fn section_header_bytecode(&self) -> Vec<u8> {
         let flags = SectionHeader::SHF_ALLOC | SectionHeader::SHF_EXECINSTR;
@@ -171,10 +173,6 @@ impl DataSection {
         self.offset = offset;
     }
 
-    pub fn offset(&self) -> u64 {
-        self.offset
-    }
-
     pub fn rodata(&self) -> Vec<(String, usize, String)> {
         let mut ro_data_labels = Vec::new();
         for node in &self.nodes {    
@@ -258,9 +256,6 @@ impl NullSection {
         ).bytecode()
     }
 
-    pub fn offset(&self) -> u64 {
-        self.offset
-    }
 }
 
 impl Section for NullSection {
@@ -308,9 +303,6 @@ impl ShStrTabSection {
         ).bytecode()
     }
 
-    pub fn offset(&self) -> u64 {
-        self.offset
-    }
 }
 
 impl Section for ShStrTabSection {
@@ -426,9 +418,6 @@ impl DynamicSection {
         ).bytecode()
     }
 
-    pub fn offset(&self) -> u64 {
-        self.offset
-    }
 }
 
 impl Section for DynamicSection {
@@ -534,9 +523,6 @@ impl DynStrSection {
         ).bytecode()
     }
 
-    pub fn offset(&self) -> u64 {
-        self.offset
-    }
 }
 
 impl Section for DynStrSection {
@@ -612,9 +598,6 @@ impl DynSymSection {
         ).bytecode()
     }
 
-    pub fn offset(&self) -> u64 {
-        self.offset
-    }
 }
 
 impl Section for DynSymSection {
@@ -679,9 +662,6 @@ impl RelDynSection {
         ).bytecode()
     }
 
-    pub fn offset(&self) -> u64 {
-        self.offset
-    }
 }
 
 impl Section for RelDynSection {
@@ -784,14 +764,14 @@ impl SectionType {
 
     pub fn offset(&self) -> u64 {
         match self {
-            SectionType::Code(cs) => cs.offset(),
-            SectionType::Data(ds) => ds.offset(),
-            SectionType::ShStrTab(ss) => ss.offset(),
-            SectionType::Dynamic(ds) => ds.offset(),
-            SectionType::DynStr(ds) => ds.offset(),
-            SectionType::DynSym(ds) => ds.offset(),
-            SectionType::Default(ns) => ns.offset(),
-            SectionType::RelDyn(rs) => rs.offset(),
+            SectionType::Code(cs) => cs.offset,
+            SectionType::Data(ds) => ds.offset,
+            SectionType::ShStrTab(ss) => ss.offset,
+            SectionType::Dynamic(ds) => ds.offset,
+            SectionType::DynStr(ds) => ds.offset,
+            SectionType::DynSym(ds) => ds.offset,
+            SectionType::Default(ns) => ns.offset,
+            SectionType::RelDyn(rs) => rs.offset,
         }
     }
 }

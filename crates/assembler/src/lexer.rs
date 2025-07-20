@@ -17,7 +17,9 @@ impl std::ops::Add for ImmediateValue {
     fn add(self, other: Self) -> ImmediateValue {
         match (self, other) {
             (ImmediateValue::Int(a), ImmediateValue::Int(b)) => ImmediateValue::Int(a + b),
-            _ => panic!("Invalid addition of ImmediateValue"),
+            (ImmediateValue::Addr(a), ImmediateValue::Addr(b)) => ImmediateValue::Addr(a + b),
+            (ImmediateValue::Int(a), ImmediateValue::Addr(b)) => ImmediateValue::Addr(a + b),
+            (ImmediateValue::Addr(a), ImmediateValue::Int(b)) => ImmediateValue::Addr(a + b),
         }
     }
 }
@@ -27,7 +29,9 @@ impl std::ops::Sub for ImmediateValue {
     fn sub(self, other: Self) -> ImmediateValue {
         match (self, other) {
             (ImmediateValue::Int(a), ImmediateValue::Int(b)) => ImmediateValue::Int(a - b),
-            _ => panic!("Invalid subtraction of ImmediateValue"),
+            (ImmediateValue::Addr(a), ImmediateValue::Addr(b)) => ImmediateValue::Addr(a - b),
+            (ImmediateValue::Int(a), ImmediateValue::Addr(b)) => ImmediateValue::Addr(a - b),
+            (ImmediateValue::Addr(a), ImmediateValue::Int(b)) => ImmediateValue::Addr(a - b),
         }
     }
 }

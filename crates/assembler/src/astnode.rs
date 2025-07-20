@@ -24,7 +24,6 @@ pub enum ASTNode {
     },
 }
 
-// remove this
 #[derive(Debug, Clone)]
 pub struct Directive {
     pub name: String,
@@ -159,6 +158,26 @@ impl ASTNode {
                 if *opcode == Opcode::Call {
                     // currently hardcoded to call sol_log_
                     bytes.extend_from_slice(&[0x10, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF]);
+                } else if *opcode == Opcode::Lddw {
+                    match &operands[..] {
+                        [Token::Register(reg, _), Token::ImmediateValue(imm, _)] => {
+                            // 1 byte register number (strip 'r' prefix)
+                            bytes.push(*reg);
+                            
+                            // 2 bytes of zeros (offset/reserved)
+                            bytes.extend_from_slice(&[0, 0]);
+
+                            // 8 bytes immediate value in little-endian
+                            let imm64 = match imm {
+                                ImmediateValue::Int(val) => *val as i64,
+                                ImmediateValue::Addr(val) => *val as i64,
+                            };
+                            bytes.extend_from_slice(&imm64.to_le_bytes()[..4]);
+                            bytes.extend_from_slice(&[0, 0, 0, 0]);
+                            bytes.extend_from_slice(&imm64.to_le_bytes()[4..8]);
+                        }
+                        _ => {}
+                    }
                 } else {
                     match &operands[..] {
                         [Token::ImmediateValue(imm, _)] => {
@@ -242,7 +261,6 @@ impl ASTNode {
                             let reg_byte = (reg << 4) | dst;
                             bytes.push(reg_byte);
                             
-                            // TODO : should only be an int
                             // Add the offset as a 16-bit value in little-endian
                             let offset16 = match offset {
                                 ImmediateValue::Int(val) => *val as u16,
@@ -250,6 +268,18 @@ impl ASTNode {
                             };
                             bytes.extend_from_slice(&offset16.to_le_bytes());
                         },
+                        [Token::Register(reg, _), Token::ImmediateValue(offset, _), Token::Register(dst, _)] => {
+                            // Combine base register and destination register into a single byte
+                            let reg_byte = (dst << 4) | reg;
+                            bytes.push(reg_byte);
+                            
+                            // Add the offset as a 16-bit value in little-endian
+                            let offset16 = match offset {
+                                ImmediateValue::Int(val) => *val as u16,
+                                ImmediateValue::Addr(val) => *val as u16,
+                            };
+                            bytes.extend_from_slice(&offset16.to_le_bytes());
+                        }
                         
                         _ => {}
                     }

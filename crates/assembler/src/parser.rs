@@ -44,6 +44,7 @@ pub trait Parse {
         where Self: Sized;
 }
 
+// can maybe be removed
 pub trait ParseInstruction {
     fn parse_instruction<'a>(tokens: &'a [Token], const_map: &HashMap<String, ImmediateValue>) -> Option<(Self, &'a [Token])>
         where Self: Sized;
@@ -442,9 +443,10 @@ fn inline_and_fold_constant_helper(tokens: &[Token]                             
                                 , const_map: &HashMap<String, ImmediateValue>   //
                                 , value: ImmediateValue                         //
                                 , idx: usize) -> (Option<ImmediateValue>, usize) {
-    if tokens.len() < idx + 1 {
+    if tokens.len() < idx + 3 {
         return (Some(value), idx + 1);
     }
+
     match (
         &tokens[idx + 1],
         &tokens[idx + 2],
@@ -454,8 +456,12 @@ fn inline_and_fold_constant_helper(tokens: &[Token]                             
             Token::ImmediateValue(value2, _)
         ) => {
             let result = match op {
-                Op::Add => value + value2.clone(),
-                Op::Sub => value - value2.clone(),
+                Op::Add => {
+                    value + value2.clone()
+                }
+                Op::Sub => {
+                    value - value2.clone()
+                }
             };
             inline_and_fold_constant_helper(tokens, const_map, result, idx + 2)
         }
