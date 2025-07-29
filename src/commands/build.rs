@@ -1,9 +1,7 @@
 use anyhow::{Error, Result};
 use dirs::home_dir;
-
 use ed25519_dalek::SigningKey;
 use rand::rngs::OsRng;
-
 use std::fs;
 use std::fs::create_dir_all;
 use std::io;

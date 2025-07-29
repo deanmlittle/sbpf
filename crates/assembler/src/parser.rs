@@ -581,6 +581,7 @@ impl Parser {
                 Token::Label(name, line_number) => {
                     if rodata_phase {
                         if let Some((rodata, rest)) = ROData::parse(tokens) {
+                            self.m_label_offsets.insert(name.clone(), self.m_accum_offset + self.m_rodata_size);
                             self.m_rodata_size += rodata.get_size();
                             rodata_nodes.push(ASTNode::ROData { rodata, offset: self.m_accum_offset });
                             tokens = rest;
@@ -588,10 +589,10 @@ impl Parser {
                             return Err("Invalid rodata declaration".to_string());
                         }
                     } else {
+                        self.m_label_offsets.insert(name.clone(), self.m_accum_offset);
                         nodes.push(ASTNode::Label(Label { name: name.clone(), line_number: *line_number }));
                         tokens = &tokens[1..];
                     }
-                    self.m_label_offsets.insert(name.clone(), self.m_accum_offset);
                 }
                 Token::Opcode(_opcode, line_number) => {
                     if let Some((inst, rest)) = Instruction::parse_instruction(tokens, &self.m_const_map) {
