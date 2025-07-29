@@ -20,7 +20,7 @@ Please make sure you have the latest version of [Solana Command Line Tools](http
 ### Installation
 
 ```sh
-cargo install --git https://github.com/deanmlittle/sbpf.git
+cargo install --git https://github.com/blueshift-gg/sbpf.git
 ```
 
 ### Usage
