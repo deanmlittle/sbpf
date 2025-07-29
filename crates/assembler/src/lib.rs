@@ -9,7 +9,6 @@ use anyhow::{Error, Result};
 pub mod parser;
 pub mod lexer;
 pub mod opcode;
-pub mod utils;
 
 // Intermediate Representation
 pub mod astnode;
