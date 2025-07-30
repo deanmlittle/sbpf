@@ -154,7 +154,7 @@ edition = "2021"
 [dependencies]
 
 [dev-dependencies]
-mollusk-svm = "0.1.5"
+mollusk-svm = "0.4.1"
 solana-sdk = "2.2.1"
 
 [features]
