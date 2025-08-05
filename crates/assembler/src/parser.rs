@@ -270,9 +270,9 @@ impl ParseInstruction for Instruction {
                                 &tokens[2],
                                 &tokens[3],
                                 // Fourth operand is folded to an immediate value
-                                &tokens[5],
-                                &tokens[6],
-                                &tokens[7],
+                                &tokens[advance_token_num],
+                                &tokens[advance_token_num + 1],
+                                &tokens[advance_token_num + 2],
                             ) {
                                 (
                                     Token::LeftBracket(_),
@@ -285,7 +285,7 @@ impl ParseInstruction for Instruction {
                                 ) => {
                                     operands.push(tokens[2].clone());
                                     operands.push(Token::ImmediateValue(value, span.clone()));
-                                    operands.push(tokens[7].clone());
+                                    operands.push(tokens[advance_token_num + 2].clone());
                                 }
                                 _ => {
                                     return None;
@@ -367,8 +367,8 @@ impl ParseInstruction for Instruction {
                                 &tokens[1],
                                 &tokens[2],
                                 // Third operand is folded to an immediate value
-                                &tokens[4],
-                                &tokens[5],
+                                &tokens[advance_token_num],
+                                &tokens[advance_token_num + 1],
                             ) {
                                 (
                                     Token::Register(_, _),
@@ -380,7 +380,7 @@ impl ParseInstruction for Instruction {
                                     opcode = FromPrimitive::from_u8((opcode as u8) + 1).expect("Invalid opcode conversion"); 
                                     operands.push(tokens[1].clone());
                                     operands.push(Token::ImmediateValue(value, span.clone()));
-                                    operands.push(tokens[5].clone());
+                                    operands.push(tokens[advance_token_num + 1].clone());
                                 }
                                 _ => {
                                     return None;
