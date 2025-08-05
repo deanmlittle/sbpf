@@ -55,7 +55,8 @@ node_modules
 keypair.json
 package-lock.json
 test-ledger
-yarn.lock"#;
+yarn.lock
+target"#;
 
 pub const PACKAGE_JSON: &str = r#"{
   "name": "default_project_name",
