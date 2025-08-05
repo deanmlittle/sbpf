@@ -4,10 +4,12 @@ use crate::lexer::{Token, ImmediateValue};
 use crate::section::{CodeSection, DataSection};
 use crate::astnode::{ASTNode, Directive, GlobalDecl, EquDecl, ExternDecl, RodataDecl, Label, Instruction, ROData};
 use crate::dynsym::{DynamicSymbolMap, RelDynMap, RelocationType};
+use crate::debuginfo::span_to_line_number;
+use codespan_reporting::files::SimpleFile;
 use num_traits::FromPrimitive;
 use std::collections::HashMap;
 
-pub struct Parser {
+pub struct Parser<> {
     tokens: Vec<Token>,
 
     pub m_prog_is_static: bool,
@@ -23,6 +25,7 @@ pub struct Parser {
     m_rel_dyns: RelDynMap,
 
     m_rodata_size: u64,
+    m_file: Option<SimpleFile<String, String>>,
 }
 
 pub struct ParseResult {
@@ -56,10 +59,11 @@ impl Parse for GlobalDecl {
             return None;
         }
         match &tokens[1] {
-            Token::Identifier(name, line_number) => Some((
+            Token::Identifier(name, span) => Some((
                 GlobalDecl {
                     entry_label: name.clone(), 
-                    line_number: *line_number },
+                    span: span.clone()
+                },
                 &tokens[2..])),
             _ => None,
         }
@@ -77,7 +81,7 @@ impl Parse for EquDecl {
             &tokens[3],
         ) {
             (
-                Token::Identifier(name, line_number),
+                Token::Identifier(name, span),
                 Token::Comma(_),
                 Token::ImmediateValue(_value, _)
             ) => {
@@ -86,7 +90,7 @@ impl Parse for EquDecl {
                         name: name.clone(),
                         // TODO: infer the number type from the value
                         value: tokens[3].clone(),
-                        line_number: *line_number
+                        span: span.clone()
                     },
                     &tokens[4..]
                 ))
@@ -105,8 +109,8 @@ impl Parse for ExternDecl {
         let mut i = 1;
         while i < tokens.len() {
             match &tokens[i] {
-                Token::Identifier(name, line_number) => {
-                    args.push(Token::Identifier(name.clone(), *line_number));
+                Token::Identifier(name, span) => {
+                    args.push(Token::Identifier(name.clone(), span.clone()));
                     i += 1;
                 }
                 _ => {
@@ -118,11 +122,12 @@ impl Parse for ExternDecl {
         if args.is_empty() {
             None
         } else {
-            let Token::Directive(_, line_number) = &tokens[0] else { unreachable!() };
+            let Token::Directive(_, span) = &tokens[0] else { unreachable!() };
             Some((
                 ExternDecl { 
                     args, 
-                    line_number: *line_number },
+                    span: span.clone()
+                },
                 &tokens[i..]
             ))
         }
@@ -142,7 +147,7 @@ impl Parse for ROData {
             &tokens[2],
         ) {
             (
-                Token::Label(name, line_number),
+                Token::Label(name, span),
                 Token::Directive(_, _),
                 Token::StringLiteral(_, _)
             ) => {
@@ -152,7 +157,7 @@ impl Parse for ROData {
                     ROData {
                         name: name.clone(),
                         args,
-                        line_number: *line_number
+                        span: span.clone()
                     },
                     &tokens[3..]
                 ))
@@ -166,7 +171,7 @@ impl ParseInstruction for Instruction {
     fn parse_instruction<'a>(tokens: &'a [Token], const_map: &HashMap<String, ImmediateValue>) -> Option<(Self, &'a [Token])> {
         let next_token_num;
         match &tokens[0] {
-            Token::Opcode(opcode, line_number) => {
+            Token::Opcode(opcode, span) => {
                 let mut opcode = opcode.clone();
                 let mut operands = Vec::new();
                 match opcode {
@@ -187,7 +192,7 @@ impl ParseInstruction for Instruction {
                                     // Third operand is folded to an immediate value
                                 ) => {
                                     operands.push(tokens[1].clone());
-                                    operands.push(Token::ImmediateValue(value, 0));
+                                    operands.push(Token::ImmediateValue(value, span.clone()));
                                 }
                                 _ => {
                                     return None;
@@ -242,7 +247,7 @@ impl ParseInstruction for Instruction {
                                 ) => {
                                     operands.push(tokens[1].clone());
                                     operands.push(tokens[4].clone());
-                                    operands.push(Token::ImmediateValue(value, 0));                                    
+                                    operands.push(Token::ImmediateValue(value, span.clone()));                                    
                                 }
                                 _ => {
                                     return None;
@@ -279,7 +284,7 @@ impl ParseInstruction for Instruction {
                                     Token::Register(_, _)
                                 ) => {
                                     operands.push(tokens[2].clone());
-                                    operands.push(Token::ImmediateValue(value, 0));
+                                    operands.push(Token::ImmediateValue(value, span.clone()));
                                     operands.push(tokens[7].clone());
                                 }
                                 _ => {
@@ -320,7 +325,7 @@ impl ParseInstruction for Instruction {
                                 ) => {
                                     opcode = FromPrimitive::from_u8((opcode as u8) + 1).expect("Invalid opcode conversion"); 
                                     operands.push(tokens[1].clone());
-                                    operands.push(Token::ImmediateValue(value, 0));
+                                    operands.push(Token::ImmediateValue(value, span.clone()));
                                 }
                                 _ => {
                                     return None;
@@ -374,7 +379,7 @@ impl ParseInstruction for Instruction {
                                 ) => {
                                     opcode = FromPrimitive::from_u8((opcode as u8) + 1).expect("Invalid opcode conversion"); 
                                     operands.push(tokens[1].clone());
-                                    operands.push(Token::ImmediateValue(value, 0));
+                                    operands.push(Token::ImmediateValue(value, span.clone()));
                                     operands.push(tokens[5].clone());
                                 }
                                 _ => {
@@ -415,7 +420,7 @@ impl ParseInstruction for Instruction {
                         }
                         let (value, advance_token_num) = inline_and_fold_constant(tokens, const_map, 1);
                         if let Some(value) = value {
-                            operands.push(Token::ImmediateValue(value, 0));
+                            operands.push(Token::ImmediateValue(value, span.clone()));
                             next_token_num = advance_token_num;
                         } else {
                             match &tokens[1] {
@@ -455,7 +460,7 @@ impl ParseInstruction for Instruction {
                     Instruction {
                         opcode,
                         operands,
-                        line_number: *line_number
+                        span: span.clone()
                     },
                     &tokens[next_token_num..]
                 ))
@@ -514,7 +519,8 @@ fn inline_and_fold_constant(tokens: &[Token]                            //
 }
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+
+    pub fn new(tokens: Vec<Token>, file: &SimpleFile<String, String>) -> Self {
         Self { tokens
             , m_prog_is_static: true
             , m_accum_offset: 0
@@ -524,6 +530,7 @@ impl Parser {
             , m_rodata_size: 0
             , m_dynamic_symbols: DynamicSymbolMap::new()
             , m_rel_dyns: RelDynMap::new()
+            , m_file: Some(file.clone())
         }
     }
 
@@ -536,12 +543,12 @@ impl Parser {
 
         while !tokens.is_empty() {
             match &tokens[0] {
-                Token::Directive(name, line_number) => {
+                Token::Directive(name, span) => {
                     match name.as_str() {
                         "global" | "globl" => {
                             if let Some((node, rest)) = GlobalDecl::parse(tokens) {
                                 self.m_entry_label = Some(node.get_entry_label());
-                                nodes.push(ASTNode::GlobalDecl(node));
+                                nodes.push(ASTNode::GlobalDecl { global_decl: node });
                                 tokens = rest;
                             } else {
                                 return Err("Invalid global declaration".to_string());
@@ -549,28 +556,28 @@ impl Parser {
                         }
                         "extern" => {
                             if let Some((node, rest)) = ExternDecl::parse(tokens) {
-                                nodes.push(ASTNode::ExternDecl(node));
+                                nodes.push(ASTNode::ExternDecl { extern_decl: node });
                                 tokens = rest;
                             } else {
                                 return Err("Invalid extern declaration".to_string());
                             }
                         }
                         "rodata" => {
-                            nodes.push(ASTNode::RodataDecl(RodataDecl { line_number: *line_number }));
+                            nodes.push(ASTNode::RodataDecl { rodata_decl: RodataDecl { span: span.clone() } });
                             rodata_phase = true;
                             tokens = &tokens[1..];
                         }
                         "equ" => {
                             if let Some((node, rest)) = EquDecl::parse(tokens) {
                                 self.m_const_map.insert(node.get_name(), node.get_val());
-                                nodes.push(ASTNode::EquDecl(node));
+                                nodes.push(ASTNode::EquDecl { equ_decl: node });
                                 tokens = rest;
                             } else {
                                 return Err("Invalid equ declaration".to_string());
                             }
                         }
                         "section" => {
-                            nodes.push(ASTNode::Directive(Directive { name: name.clone(), args: Vec::new(), line_number: *line_number }));
+                            nodes.push(ASTNode::Directive { directive: Directive { name: name.clone(), args: Vec::new(), span: span.clone() } });
                             tokens = &tokens[1..];
                         }
                         _ => {
@@ -578,7 +585,7 @@ impl Parser {
                         }
                     }
                 }
-                Token::Label(name, line_number) => {
+                Token::Label(name, span) => {
                     if rodata_phase {
                         if let Some((rodata, rest)) = ROData::parse(tokens) {
                             self.m_label_offsets.insert(name.clone(), self.m_accum_offset + self.m_rodata_size);
@@ -590,11 +597,11 @@ impl Parser {
                         }
                     } else {
                         self.m_label_offsets.insert(name.clone(), self.m_accum_offset);
-                        nodes.push(ASTNode::Label(Label { name: name.clone(), line_number: *line_number }));
+                        nodes.push(ASTNode::Label { label: Label { name: name.clone(), span: span.clone() } });
                         tokens = &tokens[1..];
                     }
                 }
-                Token::Opcode(_opcode, line_number) => {
+                Token::Opcode(_opcode, span) => {
                     if let Some((inst, rest)) = Instruction::parse_instruction(tokens, &self.m_const_map) {
                         if inst.needs_relocation() {
                             self.m_prog_is_static = false;
@@ -609,7 +616,7 @@ impl Parser {
                         nodes.push(ASTNode::Instruction { instruction: inst, offset });
                         tokens = rest;
                     } else {
-                        return Err(format!("Invalid instruction at line {}", line_number));
+                        return Err(format!("Invalid instruction at line {}", span_to_line_number(span.clone(), self.m_file.as_ref().unwrap())));
                     }
                 }
                 _ => {
@@ -621,7 +628,7 @@ impl Parser {
         // Second pass to resolve labels
         for node in &mut nodes {
             match node {
-                ASTNode::Instruction { instruction: Instruction { opcode, operands, .. }, offset } => {
+                ASTNode::Instruction { instruction: Instruction { opcode, operands, .. }, offset, .. } => {
                     // For jump instructions, replace label operands with relative offsets
                     if *opcode == Opcode::Ja || *opcode == Opcode::JeqImm || *opcode == Opcode::JgtImm || *opcode == Opcode::JgeImm 
                     || *opcode == Opcode::JltImm || *opcode == Opcode::JleImm || *opcode == Opcode::JsetImm || *opcode == Opcode::JneImm     
@@ -629,18 +636,18 @@ impl Parser {
                     || *opcode == Opcode::JeqReg || *opcode == Opcode::JgtReg || *opcode == Opcode::JgeReg || *opcode == Opcode::JltReg 
                     || *opcode == Opcode::JleReg || *opcode == Opcode::JsetReg || *opcode == Opcode::JneReg || *opcode == Opcode::JsgtReg 
                     || *opcode == Opcode::JsgeReg || *opcode == Opcode::JsltReg || *opcode == Opcode::JsleReg {
-                        if let Some(Token::Identifier(label, _)) = operands.last() {
+                        if let Some(Token::Identifier(label, span)) = operands.last() {
                             let label = label.clone(); // Clone early to avoid borrow conflict
                             if let Some(target_offset) = self.m_label_offsets.get(&label) {
                                 let rel_offset = (*target_offset as i64 - *offset as i64) / 8 - 1;
                                 // Replace label with immediate value
                                 let last_idx = operands.len() - 1;
-                                operands[last_idx] = Token::ImmediateValue(ImmediateValue::Int(rel_offset), 0);
+                                operands[last_idx] = Token::ImmediateValue(ImmediateValue::Int(rel_offset), span.clone());
                             }
                         }
                     }
                     if *opcode == Opcode::Lddw {
-                        if let Some(Token::Identifier(name, _)) = operands.last() {
+                        if let Some(Token::Identifier(name, span)) = operands.last() {
                             let label = name.clone();
                             if let Some(target_offset) = self.m_label_offsets.get(&label) {
                                 let ph_count = if self.m_prog_is_static { 1 } else { 3 };
@@ -648,7 +655,7 @@ impl Parser {
                                 let abs_offset = *target_offset as i64 + ph_offset;
                                 // Replace label with immediate value
                                 let last_idx = operands.len() - 1;
-                                operands[last_idx] = Token::ImmediateValue(ImmediateValue::Addr(abs_offset), 0);
+                                operands[last_idx] = Token::ImmediateValue(ImmediateValue::Addr(abs_offset), span.clone());
                             }
                         }
                     }
@@ -665,7 +672,7 @@ impl Parser {
         }
         
         Ok(ParseResult {
-            code_section: CodeSection::new(nodes, self.m_accum_offset),
+            code_section: CodeSection::new(nodes, self.m_accum_offset, self.m_file.as_ref().unwrap()),
             data_section: DataSection::new(rodata_nodes, self.m_rodata_size),
             dynamic_symbols: DynamicSymbolMap::copy(&self.m_dynamic_symbols),
             relocation_data: RelDynMap::copy(&self.m_rel_dyns),

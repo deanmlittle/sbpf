@@ -6,6 +6,7 @@ use crate::lexer::Token;
 use crate::debuginfo::DebugInfo;
 use std::collections::HashMap;
 use crate::astnode::ROData;
+use codespan_reporting::files::SimpleFile;
 
 // Base Section trait
 pub trait Section {
@@ -39,11 +40,11 @@ pub struct CodeSection {
 }
 
 impl CodeSection {
-    pub fn new(nodes: Vec<ASTNode>, size: u64) -> Self {
+    pub fn new(nodes: Vec<ASTNode>, size: u64, file: &SimpleFile<String, String>) -> Self {
         let line_map = HashMap::new();
         let mut debug_map = HashMap::new();
         for node in &nodes {
-            if let Some((_, node_debug_map)) = node.bytecode_with_debug_map() {
+            if let Some((_, node_debug_map)) = node.bytecode_with_debug_map(Some(file)) {
                 debug_map.extend(node_debug_map);
             }
         }

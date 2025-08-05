@@ -4,11 +4,16 @@ extern crate anyhow;
 
 use std::path::Path;
 use anyhow::{Error, Result};
+use codespan_reporting::files::SimpleFile;
 
 // Tokenizer and parser
 pub mod parser;
 pub mod lexer;
 pub mod opcode;
+
+// Error handling and diagnostics
+pub mod macros;
+pub mod errors;
 
 // Intermediate Representation
 pub mod astnode;
@@ -38,12 +43,14 @@ pub use self::{
 
 pub fn assemble(src: &str, deploy: &str) -> Result<()> {
     let source_code = std::fs::read_to_string(src)?;
+    let file = SimpleFile::new(src.to_string(), source_code.clone());
+
     let tokens = match tokenize(&source_code) {
         Ok(tokens) => tokens,
         Err(e) => return Err(Error::msg(format!("Tokenizer error: {}", e))),
     };
 
-    let mut parser = Parser::new(tokens);
+    let mut parser = Parser::new(tokens, &file);
     let parse_result = match parser.parse() {
         Ok(program) => program,
         Err(e) => return Err(Error::msg(format!("Parser error: {}", e))),
