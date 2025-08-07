@@ -20,4 +20,4 @@ To report a bug, please [open an issue](https://github.com/blueshift-gg/sbpf/iss
 For minor bugs that are solvable in a single-issue PR, feel free to immediately [open a PR](https://github.com/blueshift-gg/sbpf/compare), referencing an open issue if one already exists. For larger bugs that affect major portions of code or implementation details, it is recommended to [open an issue](https://github.com/blueshift-gg/sbpf/issues/new) first and ping the team on [Discord](https://discord.blueshift.gg) to discuss.
 
 ## Nits/Typos
-Feel free to directly [open a PR]](https://github.com/blueshift-gg/sbpf/compare).
+Feel free to directly [open a PR](https://github.com/blueshift-gg/sbpf/compare).
