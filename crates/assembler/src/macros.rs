@@ -13,15 +13,15 @@ macro_rules! define_compile_errors {
         pub enum CompileError {
             $(
                 #[error($error_msg)]
-                $variant { $( $field_name: $field_ty ),* }
+                $variant { $( $field_name: $field_ty ),*, custom_label: Option<String> }
             ),*
         }
 
         impl CompileError {
-            pub fn label(&self) -> &'static str {
+            pub fn label(&self) -> &str {
                 match self {
                     $(
-                        Self::$variant { .. } => $label_msg,
+                        Self::$variant { custom_label, .. } => custom_label.as_deref().unwrap_or($label_msg),
                     )*
                 }
             }
@@ -36,4 +36,18 @@ macro_rules! define_compile_errors {
         }
     };
 }
+
+#[macro_export]
+macro_rules! bug {
+    ($($arg:tt)*) => {{
+        eprintln!(
+            "\n{}\n{}",
+            "Thanks for abusing the compiler <3 you've hunted a bug!",
+            format!("Please file a bug report at: {}", "https://github.com/blueshift-gg/sbpf/issues")
+        );
+
+        panic!("{}", format!("Internal error: {}\n", format!($($arg)*)));
+    }};
+}
+
 

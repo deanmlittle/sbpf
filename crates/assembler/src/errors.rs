@@ -2,6 +2,7 @@ use crate::define_compile_errors;
 use std::ops::Range;
 
 define_compile_errors! {
+    // Lexical errors
     InvalidNumber {
         error = "Invalid number '{number}'",
         label = "Invalid number",
@@ -21,20 +22,65 @@ define_compile_errors! {
         error = "Unterminated string literal",
         label = "Unterminated string literal",
         fields = { span: Range<usize> }
-    }
+    },
+    // Syntactic errors
+    InvalidGlobalDecl {
+        error = "Invalid global declaration",
+        label = "Expected <identifier> for entry label",
+        fields = { span: Range<usize> }
+    },
+    InvalidExternDecl {
+        error = "Invalid extern declaration",
+        label = "Invalid extern declaration",
+        fields = { span: Range<usize> }
+    },
+    InvalidRodataDecl {
+        error = "Invalid rodata declaration",
+        label = "Invalid rodata declaration",
+        fields = { span: Range<usize> }
+    },
+    InvalidEquDecl {
+        error = "Invalid equ declaration",
+        label = "Invalid equ declaration",
+        fields = { span: Range<usize> }
+    },
+    InvalidDirective {
+        error = "Invalid directive '{directive}'",
+        label = "Invalid directive",
+        fields = { directive: String, span: Range<usize> }
+    },
+    InvalidInstruction {
+        error = "Invalid '{instruction}' instruction",
+        label = "Invalid instruction",
+        fields = { instruction: String, span: Range<usize> }
+    },
+    UnexpectedToken {
+        error = "Unexpected token '{token}'",
+        label = "Unexpected token",
+        fields = { token: String, span: Range<usize> }
+    },
+
+    // Semantic errors
+    UndefinedLabel {
+        error = "Undefined label '{label}'",
+        label = "Undefined label",
+        fields = { label: String, span: Range<usize> }
+    },
 }
+
 
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 
 pub trait AsDiagnostic {
-    fn as_diagnostic(&self) -> Diagnostic<usize>;
+    // currently only support single source file reporting
+    fn to_diagnostic(&self) -> Diagnostic<()>;
 }
 
 impl AsDiagnostic for CompileError {
-    fn as_diagnostic(&self) -> Diagnostic<usize> {
+    fn to_diagnostic(&self) -> Diagnostic<()> {
         Diagnostic::error()
             .with_message(self.to_string())
-            .with_labels(vec![Label::primary(0, self.span().start..self.span().end).with_message(self.label())])
+            .with_labels(vec![Label::primary((), self.span().start..self.span().end).with_message(self.label())])
     }
 }
 

@@ -53,19 +53,20 @@ pub enum Token {
     RightBracket(Range<usize>),
     Comma(Range<usize>),
     Colon(Range<usize>),
+
+    Newline(Range<usize>),
 }
 
-pub fn tokenize(source: &str) -> Result<Vec<Token>, CompileError> {
+pub fn tokenize(source: &str) -> Result<Vec<Token>, Vec<CompileError>> {
     let mut tokens = Vec::new();
+    let mut errors = Vec::new();
     let mut byte_offset = 0;
 
     for line in source.lines() {
-
         if line.is_empty() {
             byte_offset += 1;
             continue;
         }
-
         let mut chars = line.char_indices().peekable();
         while let Some((start_idx, c)) = chars.peek() {
             let token_start = byte_offset + start_idx;
@@ -87,9 +88,17 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>, CompileError> {
                     }
                     let span = token_start..token_start + number.len();
                     if is_addr {
-                        tokens.push(Token::ImmediateValue(ImmediateValue::Addr(i64::from_str_radix(&number, 16).map_err(|_| CompileError::InvalidNumber { number, span: span.clone() })?), span.clone())); 
+                        if let Ok(value) = i64::from_str_radix(&number, 16) {
+                            tokens.push(Token::ImmediateValue(ImmediateValue::Addr(value), span.clone()));
+                        } else {
+                            errors.push(CompileError::InvalidNumber { number, span: span.clone(), custom_label: None });
+                        }
                     } else {
-                        tokens.push(Token::ImmediateValue(ImmediateValue::Int(number.parse::<i64>().map_err(|_| CompileError::InvalidNumber { number, span: span.clone() })?), span.clone()));
+                        if let Ok(value) = number.parse::<i64>() {
+                            tokens.push(Token::ImmediateValue(ImmediateValue::Int(value), span.clone()));
+                        } else {
+                            errors.push(CompileError::InvalidNumber { number, span: span.clone(), custom_label: None });
+                        }
                     }      
                 }
 
@@ -107,7 +116,12 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>, CompileError> {
                         let label_name = identifier.trim_end_matches(':').to_string();
                         tokens.push(Token::Label(label_name, span));
                     } else if identifier.starts_with('r') && identifier[1..].chars().all(|c| c.is_ascii_digit()) {
-                        tokens.push(Token::Register(identifier[1..].parse::<u8>().map_err(|_| CompileError::InvalidRegister { register: identifier, span: span.clone() })?, span.clone()));
+                        // TODO: label name can be "r"
+                        if let Ok(value) = identifier[1..].parse::<u8>() {
+                            tokens.push(Token::Register(value, span.clone()));
+                        } else {
+                            errors.push(CompileError::InvalidRegister { register: identifier, span: span.clone(), custom_label: None });
+                        }
                     } else if let Ok(opcode) = Opcode::from_str(&identifier) {
                         tokens.push(Token::Opcode(opcode, span));
                     } else {
@@ -146,7 +160,7 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>, CompileError> {
                             tokens.push(Token::StringLiteral(string_literal, span));
                             break;
                         } else if *c == '\n' {
-                            return Err(CompileError::UnterminatedStringLiteral { span: token_start..token_start + 1 });
+                            errors.push(CompileError::UnterminatedStringLiteral { span: token_start..token_start + 1, custom_label: None });
                         }
                         string_literal.push(chars.next().unwrap().1);
                     }
@@ -178,16 +192,22 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>, CompileError> {
                         break;
                     } else {
                         let span = token_start..token_start + 1;
-                        return Err(CompileError::UnexpectedCharacter { character: '/', span });
+                        errors.push(CompileError::UnexpectedCharacter { character: '/', span, custom_label: None });
                     }
                 }
                 _ => {
                     let span = token_start..token_start + 1;
-                    return Err(CompileError::UnexpectedCharacter { character: *c, span });
+                    errors.push(CompileError::UnexpectedCharacter { character: *c, span, custom_label: None });
                 }
             }
         }
-        byte_offset += line.len() + 1;
+        byte_offset += line.len();
+        tokens.push(Token::Newline(byte_offset..byte_offset + 1));
+        byte_offset += 1;
     }
-    Ok(tokens)
+    if errors.is_empty() {
+        Ok(tokens)
+    } else {
+        Err(errors)
+    }
 }

@@ -608,4 +608,7 @@ impl Opcode {
             Opcode::Exit => "exit",
         }
     }
+    pub fn to_string(&self) -> String {
+        self.to_str().to_string()
+    }
 }

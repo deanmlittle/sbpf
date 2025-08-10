@@ -10,3 +10,4 @@ num-traits = { workspace = true }
 thiserror = { workspace = true }
 anyhow = { workspace = true }
 codespan-reporting = { workspace = true }
+termcolor = "1.4"
