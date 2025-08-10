@@ -140,7 +140,7 @@ impl Parse for ExternDecl {
 
 impl Parse for ROData {
     fn parse(tokens: &[Token]) -> Result<(Self, &[Token]), CompileError> {
-        let Token::Directive(_, span) = &tokens[0] else { bug!("ROData not a valid directive") };
+        let Token::Label(_, span) = &tokens[0] else { bug!("ROData not a valid directive") };
         if tokens.len() < 3 {
             return Err(CompileError::InvalidRodataDecl { span: span.clone(), custom_label: Some(EXPECTS_MORE_OPERAND.to_string()) });
         }

@@ -65,7 +65,7 @@ pub fn build() -> Result<()> {
             if let Some(subdir) = path.file_name().and_then(|name| name.to_str()) {
                 let asm_file = format!("{}/{}/{}.s", src, subdir, subdir);
                 if Path::new(&asm_file).exists() {
-                    println!("⚡️ Light building \"{}\"", subdir);
+                    println!("⚡️ Building \"{}\"", subdir);
                     let start = Instant::now();
                     compile_assembly(&asm_file, deploy)?;
                     let duration = start.elapsed();

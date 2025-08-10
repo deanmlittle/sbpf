@@ -1,6 +1,6 @@
 mod utils;
 
-use utils::{TestEnv, init_project, verify_project_structure, run_light_build, verify_so_files, run_tests, update_assembly_file};
+use utils::{TestEnv, init_project, verify_project_structure, verify_so_files, run_tests, update_assembly_file, run_build};
 
 #[test]
 fn test_memo_project_e2e() {
@@ -12,8 +12,8 @@ fn test_memo_project_e2e() {
     // Step 2: Verify project structure
     verify_project_structure(&env, "memo");
     
-    // Step 3: Run light-build
-    run_light_build(&env);
+    // Step 3: Run build
+    run_build(&env);
     
     // Step 4: Verify .so files were created
     verify_so_files(&env);
@@ -50,8 +50,8 @@ entrypoint:
   exit"#;
     update_assembly_file(&env, "memo2", new_memo_content);
     
-    // Step 4: Run light-build
-    run_light_build(&env);
+    // Step 4: Run build
+    run_build(&env);
     
     // Step 5: Verify .so files were created
     verify_so_files(&env);
