@@ -1,3 +1,6 @@
+use std::ops::Range;
+use codespan_reporting::files::{SimpleFile, Files};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RegisterType {
     Int,
@@ -42,4 +45,7 @@ impl DebugInfo {
     }
 }
 
-
+pub fn span_to_line_number(span: Range<usize>, file: &SimpleFile<String, String>) -> usize {
+    let start_line = file.line_index((), span.start).ok();
+    start_line.unwrap_or(0) + 1
+}

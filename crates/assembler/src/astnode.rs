@@ -3,38 +3,54 @@ use crate::lexer::{Token, ImmediateValue};
 use crate::dynsym::RelocationType;
 use crate::debuginfo::{DebugInfo, RegisterHint, RegisterType};
 use std::collections::HashMap;
+use std::ops::Range;
+use codespan_reporting::files::SimpleFile;
+use crate::debuginfo::span_to_line_number;
 
 #[derive(Debug, Clone)]
 pub enum ASTNode {
     // only present in the AST
-    Directive(Directive),
-    GlobalDecl(GlobalDecl),
-    EquDecl(EquDecl),
-    ExternDecl(ExternDecl),
-    RodataDecl(RodataDecl),
-    Label(Label),
-    // present in the bytecode
-    Instruction {
-        instruction: Instruction,
-        offset: u64,
+    Directive {
+        directive: Directive,
     },
+    GlobalDecl {
+        global_decl: GlobalDecl,
+    },
+    EquDecl {
+        equ_decl: EquDecl,
+    },
+    ExternDecl {
+        extern_decl: ExternDecl,
+    },
+    RodataDecl {
+        rodata_decl: RodataDecl,
+    },
+    Label {
+        label: Label,
+    },
+    // present in the bytecode
     ROData {
         rodata: ROData,
         offset: u64,
     },
+    Instruction {
+        instruction: Instruction,
+        offset: u64,
+    },
+
 }
 
 #[derive(Debug, Clone)]
 pub struct Directive {
     pub name: String,
     pub args: Vec<Token>,
-    pub line_number: usize,
+    pub span: Range<usize>,
 }
 
 #[derive(Debug, Clone)]
 pub struct GlobalDecl {
     pub entry_label: String,
-    pub line_number: usize,
+    pub span: Range<usize>,
 }
 
 impl GlobalDecl {
@@ -47,7 +63,7 @@ impl GlobalDecl {
 pub struct EquDecl {
     pub name: String,
     pub value: Token,
-    pub line_number: usize,
+    pub span: Range<usize>,
 }
 
 impl EquDecl {
@@ -65,25 +81,44 @@ impl EquDecl {
 #[derive(Debug, Clone)]
 pub struct ExternDecl {
     pub args: Vec<Token>,
-    pub line_number: usize,
+    pub span: Range<usize>,
 }
 
 #[derive(Debug, Clone)]
 pub struct RodataDecl {
-    pub line_number: usize,
+    pub span: Range<usize>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Label {
     pub name: String,
-    pub line_number: usize,
+    pub span: Range<usize>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ROData {
+    pub name: String,
+    pub args: Vec<Token>,
+    pub span: Range<usize>,
+}
+
+impl ROData {
+    pub fn get_size(&self) -> u64 {
+        let mut size = 0;
+        for arg in &self.args {
+            if let Token::StringLiteral(s, _) = arg {
+                size += s.len() as u64;
+            }
+        }
+        size
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct Instruction {
     pub opcode: Opcode,
     pub operands: Vec<Token>,
-    pub line_number: usize,
+    pub span: Range<usize>,
 }
 
 impl Instruction {
@@ -124,35 +159,22 @@ impl Instruction {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ROData {
-    pub name: String,
-    pub args: Vec<Token>,
-    pub line_number: usize,
-}
-
-impl ROData {
-    pub fn get_size(&self) -> u64 {
-        let mut size = 0;
-        for arg in &self.args {
-            if let Token::StringLiteral(s, _) = arg {
-                size += s.len() as u64;
-            }
-        }
-        size
-    }
-}
 
 impl ASTNode {
-    pub fn bytecode_with_debug_map(&self) -> Option<(Vec<u8>, HashMap<u64, DebugInfo>)> {
+    pub fn bytecode_with_debug_map(&self, file: Option<&SimpleFile<String, String>>) -> Option<(Vec<u8>, HashMap<u64, DebugInfo>)> {
         match self {
-            ASTNode::Instruction { instruction: Instruction { opcode, operands, line_number }, offset } => {
+            ASTNode::Instruction { instruction: Instruction { opcode, operands, span }, offset } => {
                 let mut bytes = Vec::new();
                 let mut line_map = HashMap::new();
                 let mut debug_map = HashMap::new();
                 // Record the start of this instruction
-                line_map.insert(*offset, *line_number);
-                let mut debug_info = DebugInfo::new(*line_number);
+                let line_number = if let Some(file) = file {
+                    span_to_line_number(span.clone(), file)
+                } else {
+                    1 // fallback
+                };
+                line_map.insert(*offset, line_number);
+                let mut debug_info = DebugInfo::new(line_number);
                 bytes.push(opcode.to_bytecode());  // 1 byte opcode
                 
                 if *opcode == Opcode::Call {
@@ -313,6 +335,6 @@ impl ASTNode {
 
     // Keep the old bytecode method for backward compatibility
     pub fn bytecode(&self) -> Option<Vec<u8>> {
-        self.bytecode_with_debug_map().map(|(bytes, _)| bytes)
+        self.bytecode_with_debug_map(None).map(|(bytes, _)| bytes)
     }
 }

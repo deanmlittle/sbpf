@@ -4,11 +4,21 @@ extern crate anyhow;
 
 use std::path::Path;
 use anyhow::{Error, Result};
+use codespan_reporting::files::SimpleFile;
+use codespan_reporting::term;
+use codespan_reporting::term::{Config};
+use termcolor::{ColorChoice, StandardStream};
+use crate::errors::AsDiagnostic;
 
 // Tokenizer and parser
 pub mod parser;
 pub mod lexer;
 pub mod opcode;
+
+// Error handling and diagnostics
+pub mod macros;
+pub mod errors;
+pub mod messages;
 
 // Intermediate Representation
 pub mod astnode;
@@ -38,15 +48,34 @@ pub use self::{
 
 pub fn assemble(src: &str, deploy: &str) -> Result<()> {
     let source_code = std::fs::read_to_string(src)?;
+    let file = SimpleFile::new(src.to_string(), source_code.clone());
+
+    // TODO: ideally we should have only collect errors and then print them with parsers
+    // errors all at once
     let tokens = match tokenize(&source_code) {
         Ok(tokens) => tokens,
-        Err(e) => return Err(Error::msg(format!("Tokenizer error: {}", e))),
+        Err(errors) => {
+            for error in errors {
+                let writer = StandardStream::stderr(ColorChoice::Auto);
+                let config = Config::default();
+                let diagnostic = error.to_diagnostic();
+                term::emit(&mut writer.lock(), &config, &file, &diagnostic)?;
+            }
+            return Err(Error::msg("Compilation failed"));
+        }
     };
-
-    let mut parser = Parser::new(tokens);
+    let mut parser = Parser::new(tokens, &file);
     let parse_result = match parser.parse() {
         Ok(program) => program,
-        Err(e) => return Err(Error::msg(format!("Parser error: {}", e))),
+        Err(errors) => {
+            for error in errors {
+                let writer = StandardStream::stderr(ColorChoice::Auto);
+                let config = Config::default();
+                let diagnostic = error.to_diagnostic();
+                term::emit(&mut writer.lock(), &config, &file, &diagnostic)?;
+            }
+            return Err(Error::msg("Compilation failed"));
+        }
     };
 
     let program = Program::from_parse_result(parse_result);

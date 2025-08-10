@@ -114,15 +114,15 @@ pub fn verify_project_structure(env: &TestEnv, project_name: &str) {
     assert!(project_dir.join("Cargo.toml").exists(), "Cargo.toml should exist");
 }
 
-/// Run light-build on the project
-pub fn run_light_build(env: &TestEnv) {
-    println!("Step 3: Running light-build...");
+/// Run build on the project
+pub fn run_build(env: &TestEnv) {
+    println!("Step 3: Running build...");
     
     run_command(
         Command::new(&env.sbpf_bin)
             .current_dir(&env.project_dir)
-            .arg("light-build"),
-        "target/debug/sbpf light-build"
+            .arg("build"),
+        "target/debug/sbpf build"
     );
 }
 
