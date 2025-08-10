@@ -37,13 +37,14 @@ macro_rules! define_compile_errors {
     };
 }
 
+// TODO: make it a hyper link
 #[macro_export]
 macro_rules! bug {
     ($($arg:tt)*) => {{
         eprintln!(
             "\n{}\n{}",
             "Thanks for abusing the compiler <3 you've hunted a bug!",
-            format!("Please file a bug report at: {}", "https://github.com/blueshift-gg/sbpf/issues")
+            format!("Please file a bug report at: {}", "https://github.com/blueshift-gg/sbpf/issues/new")
         );
 
         panic!("{}", format!("Internal error: {}\n", format!($($arg)*)));
