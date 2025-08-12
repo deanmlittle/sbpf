@@ -198,6 +198,7 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>, Vec<CompileError>> {
                 _ => {
                     let span = token_start..token_start + 1;
                     errors.push(CompileError::UnexpectedCharacter { character: *c, span, custom_label: None });
+                    chars.next();
                 }
             }
         }
